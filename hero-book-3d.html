@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 智能体平台 · Hero</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #EDF1FA;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'PingFang SC', 'Helvetica Neue', sans-serif;
+  overflow: hidden;
+}
+
+/* ── 背景 ── */
+.bg {
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 65% 55% at 15% 15%, rgba(160,195,255,0.38) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 85% 85%, rgba(180,210,255,0.28) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 40% at 80% 15%, rgba(200,220,255,0.2) 0%, transparent 60%),
+    linear-gradient(155deg, #F2F6FF 0%, #E8EEF9 50%, #EFF4FF 100%);
+  overflow: hidden;
+}
+/* 背景网格 */
+.bg::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,60,180,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,60,180,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+}
+
+/* ── 舞台 ── */
+.stage {
+  position: relative;
+  width: 1000px; height: 600px;
+  z-index: 1;
+}
+
+/* ── 底座同心圆 ── */
+.rings-wrap {
+  position: absolute;
+  bottom: 30px; left: 50%;
+  transform: translateX(-50%);
+  width: 580px; height: 160px;
+  pointer-events: none;
+}
+.rings-wrap svg { width: 100%; height: 100%; overflow: visible; }
+
+/* ── 主面板（中心元素）── */
+.main-panel {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -54%) perspective(1000px) rotateX(4deg) rotateY(-6deg);
+  width: 420px;
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(180,210,255,0.7);
+  border-radius: 20px;
+  box-shadow:
+    0 2px 0 rgba(255,255,255,0.9) inset,
+    0 20px 60px rgba(0,60,180,0.14),
+    0 4px 16px rgba(0,40,140,0.08);
+  overflow: hidden;
+  z-index: 20;
+}
+
+/* 面板标题栏 */
+.panel-header {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid rgba(0,60,180,0.07);
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255,255,255,0.6);
+}
+.panel-title-group { display: flex; align-items: center; gap: 10px; }
+.panel-logo {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: linear-gradient(135deg, #1A55DD, #4488FF);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(30,100,255,0.35);
+}
+.panel-name { font-size: 13px; font-weight: 700; color: #0B1E3D; }
+.panel-sub  { font-size: 10px; color: rgba(0,60,160,0.45); margin-top: 1px; }
+.panel-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; color: #0A9E5C; font-weight: 600;
+  background: rgba(10,160,90,0.08); border: 1px solid rgba(10,160,90,0.2);
+  border-radius: 20px; padding: 3px 10px;
+}
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #0A9E5C;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+
+/* 面板主体：三列布局 */
+.panel-body {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  min-height: 220px;
+}
+.panel-col {
+  padding: 14px 14px 14px 16px;
+}
+.panel-col + .panel-col {
+  border-left: 1px solid rgba(0,60,180,0.07);
+}
+.col-title {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.8px;
+  text-transform: uppercase; color: rgba(0,60,180,0.4);
+  margin-bottom: 10px;
+}
+
+/* 输入文件列表 */
+.doc-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 8px; border-radius: 8px;
+  margin-bottom: 5px;
+  background: rgba(0,60,180,0.04);
+  border: 1px solid rgba(0,60,180,0.06);
+  cursor: default;
+}
+.doc-item.active {
+  background: rgba(30,100,255,0.07);
+  border-color: rgba(30,100,255,0.18);
+}
+.doc-icon {
+  width: 24px; height: 24px; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; flex-shrink: 0;
+}
+.doc-info { flex: 1; min-width: 0; }
+.doc-name { font-size: 10px; font-weight: 600; color: #0B1E3D; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-meta { font-size: 8px; color: rgba(0,60,160,0.4); margin-top: 1px; }
+.doc-badge {
+  font-size: 8px; font-weight: 700; padding: 1px 5px;
+  border-radius: 3px; flex-shrink: 0;
+}
+
+/* 中间处理流 */
+.process-col {
+  width: 90px;
+  padding: 14px 8px;
+  display: flex; flex-direction: column; align-items: center;
+  background: rgba(240,245,255,0.5);
+}
+.proc-node {
+  width: 52px; height: 36px;
+  background: linear-gradient(135deg, #1A55DD, #4488FF);
+  border-radius: 9px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  box-shadow: 0 3px 12px rgba(30,100,255,0.3);
+  margin: 3px 0;
+  position: relative;
+}
+.proc-node-label { font-size: 7px; color: rgba(255,255,255,0.8); font-weight: 600; margin-top: 1px; }
+.proc-connector {
+  width: 1px; height: 12px;
+  background: linear-gradient(180deg, rgba(30,100,255,0.4), rgba(30,100,255,0.1));
+  position: relative;
+}
+.proc-connector::after {
+  content: '';
+  position: absolute; bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 4px solid rgba(30,100,255,0.35);
+}
+.proc-title { font-size: 9px; font-weight: 700; color: rgba(0,60,180,0.4); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+
+/* 输出结果 */
+.result-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 7px 8px; border-radius: 8px;
+  margin-bottom: 5px;
+  background: rgba(10,160,90,0.04);
+  border: 1px solid rgba(10,160,90,0.1);
+}
+.result-item.blue {
+  background: rgba(30,100,255,0.04);
+  border-color: rgba(30,100,255,0.1);
+}
+.result-icon {
+  width: 22px; height: 22px; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; flex-shrink: 0; margin-top: 1px;
+}
+.result-name { font-size: 10px; font-weight: 600; color: #0B1E3D; }
+.result-desc { font-size: 8px; color: rgba(0,60,160,0.45); margin-top: 2px; line-height: 1.4; }
+
+/* 面板底部进度条 */
+.panel-footer {
+  padding: 10px 16px 12px;
+  border-top: 1px solid rgba(0,60,180,0.06);
+  background: rgba(248,251,255,0.8);
+  display: flex; align-items: center; gap: 12px;
+}
+.pf-label { font-size: 9px; color: rgba(0,60,160,0.5); font-weight: 600; white-space: nowrap; }
+.pf-bar-wrap { flex: 1; height: 4px; background: rgba(0,60,180,0.08); border-radius: 2px; overflow: hidden; }
+.pf-bar {
+  height: 100%; width: 73%;
+  background: linear-gradient(90deg, #1A55DD, #4488FF, #77AAFF);
+  border-radius: 2px;
+  animation: progress 3s ease-in-out infinite alternate;
+}
+@keyframes progress { from{width:55%} to{width:88%} }
+.pf-pct { font-size: 10px; font-weight: 700; color: #1A55DD; }
+.pf-count { font-size: 9px; color: rgba(0,60,160,0.4); margin-left: 4px; }
+
+/* 面板光晕 */
+.panel-glow {
+  position: absolute;
+  width: 380px; height: 60px;
+  bottom: -24px; left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(30,80,220,0.18) 0%, transparent 70%);
+  filter: blur(14px);
+  pointer-events: none;
+  z-index: 19;
+}
+
+/* ── 场景标签卡片 ── */
+.scene-card {
+  position: absolute;
+  background: rgba(255,255,255,0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(170,200,255,0.55);
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 6px 28px rgba(0,60,180,0.1), 0 1px 0 rgba(255,255,255,0.9) inset;
+  display: flex; align-items: center; gap: 10px;
+  min-width: 150px;
+  animation: sceneFloat ease-in-out infinite;
+}
+@keyframes sceneFloat {
+  0%,100% { transform: translateY(0px) rotate(var(--rot,0deg)); }
+  50%      { transform: translateY(-7px) rotate(var(--rot,0deg)); }
+}
+.sc-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+.sc-name { font-size: 11px; font-weight: 700; color: #0B1E3D; }
+.sc-desc { font-size: 9px; color: rgba(0,60,160,0.45); margin-top: 2px; }
+.sc-tag {
+  margin-top: 5px; display: inline-block;
+  font-size: 8px; font-weight: 700; padding: 2px 6px;
+  border-radius: 3px; letter-spacing: 0.3px;
+}
+
+/* 五个场景卡片位置 */
+.sc-1 { left: 18px;  top: 68px;  --rot: -3deg; animation-duration: 3.8s; animation-delay: 0s; }
+.sc-2 { left: 8px;   top: 232px; --rot: 2deg;  animation-duration: 4.2s; animation-delay: -1.2s; }
+.sc-3 { left: 30px;  bottom: 80px; --rot: -2deg; animation-duration: 3.6s; animation-delay: -0.6s; }
+.sc-4 { right: 14px; top: 72px;  --rot: 3deg;  animation-duration: 4s;   animation-delay: -2s; }
+.sc-5 { right: 6px;  top: 250px; --rot: -2deg; animation-duration: 3.5s; animation-delay: -0.9s; }
+
+/* 连线（输入到面板的虚线） */
+.connector-line {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ── 右侧弧形装饰 ── */
+.arc-deco {
+  position: absolute;
+  right: -20px; top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* ── 顶部 badge ── */
+.hero-badge {
+  position: absolute;
+  top: 28px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(0,80,220,0.18);
+  border-radius: 24px;
+  padding: 6px 18px 6px 12px;
+  display: flex; align-items: center; gap: 8px;
+  box-shadow: 0 2px 12px rgba(0,60,180,0.1);
+  font-size: 12px; font-weight: 700; color: #0B1E3D;
+  white-space: nowrap;
+}
+.hb-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: linear-gradient(135deg, #1A55DD, #66AAFF);
+  box-shadow: 0 0 6px rgba(30,100,255,0.5);
+  animation: pulse 2s ease-in-out infinite;
+}
+.hb-tag {
+  font-size: 9px; font-weight: 700; color: #1A55DD;
+  background: rgba(30,100,255,0.09); border: 1px solid rgba(30,100,255,0.2);
+  border-radius: 4px; padding: 1px 6px; margin-left: 2px;
+}
+
+/* ── 底部文字 ── */
+.hero-text {
+  position: absolute;
+  bottom: 12px; left: 50%;
+  transform: translateX(-50%);
+  text-align: center; white-space: nowrap;
+}
+.ht-main { font-size: 15px; font-weight: 800; color: #0B1E3D; letter-spacing: -0.3px; }
+.ht-sub  { font-size: 11px; color: rgba(0,60,160,0.45); margin-top: 3px; }
+
+/* ── 右上角数据卡 ── */
+.data-card {
+  position: absolute;
+  right: 16px; bottom: 108px;
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(170,200,255,0.5);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 6px 24px rgba(0,60,180,0.1);
+  min-width: 136px;
+  animation: sceneFloat 4.5s ease-in-out infinite;
+  --rot: 2deg;
+}
+.dc-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.dc-label { font-size: 9px; color: rgba(0,60,160,0.45); font-weight: 600; }
+.dc-val { font-size: 18px; font-weight: 800; color: #0B1E3D; letter-spacing: -0.5px; }
+.dc-unit { font-size: 10px; color: rgba(0,60,160,0.5); margin-left: 2px; }
+.dc-trend { font-size: 9px; font-weight: 700; color: #0A9E5C; background: rgba(10,160,90,0.08); padding: 1px 5px; border-radius: 3px; }
+.dc-mini-bars { display: flex; align-items: flex-end; gap: 3px; height: 28px; }
+.dc-bar { flex: 1; border-radius: 2px 2px 0 0; }
+
+/* 浮动粒子 */
+.bg-particle {
+  position: absolute; border-radius: 50%;
+  background: rgba(30,100,255,0.07);
+  animation: floatP linear infinite;
+}
+@keyframes floatP {
+  from { transform: translateY(100vh) scale(0); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 0.4; }
+  to   { transform: translateY(-10vh) scale(1.2); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg" id="bg"></div>
+
+<div class="stage">
+
+  <!-- 顶部 Badge -->
+  <div class="hero-badge">
+    <div class="hb-dot"></div>
+    企业 AI 智能体平台
+    <span class="hb-tag">5 大场景</span>
+  </div>
+
+  <!-- 底座同心圆光圈 -->
+  <div class="rings-wrap">
+    <svg viewBox="0 0 580 160" fill="none">
+      <defs>
+        <radialGradient id="rg0" cx="50%" cy="40%" r="50%">
+          <stop offset="0%" stop-color="#4488FF" stop-opacity="0.2"/>
+          <stop offset="100%" stop-color="#4488FF" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="glow0"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow1"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <!-- 平台光晕面 -->
+      <ellipse cx="290" cy="88" rx="200" ry="36" fill="url(#rg0)"/>
+      <!-- 光圈 由内到外 -->
+      <ellipse cx="290" cy="84" rx="72"  ry="12" fill="none" stroke="#4488FF" stroke-width="1.6" opacity="0.75" filter="url(#glow0)"/>
+      <ellipse cx="290" cy="87" rx="118" ry="20" fill="none" stroke="#3377EE" stroke-width="1.2" opacity="0.48"/>
+      <ellipse cx="290" cy="91" rx="166" ry="28" fill="none" stroke="#2266DD" stroke-width="1"   opacity="0.3"/>
+      <ellipse cx="290" cy="95" rx="214" ry="36" fill="none" stroke="#1A55CC" stroke-width="0.8" opacity="0.18"/>
+      <ellipse cx="290" cy="99" rx="258" ry="43" fill="none" stroke="#1A55CC" stroke-width="0.6" opacity="0.1"/>
+      <!-- 中心脉冲 -->
+      <ellipse cx="290" cy="84" rx="44"  ry="7"  fill="#3366FF" opacity="0.15" filter="url(#glow1)"/>
+      <ellipse cx="290" cy="84" rx="22"  ry="4"  fill="#4488FF" opacity="0.28" filter="url(#glow0)">
+        <animate attributeName="opacity" values="0.28;0.55;0.28" dur="2.2s" repeatCount="indefinite"/>
+      </ellipse>
+    </svg>
+  </div>
+
+  <!-- 右侧弧形装饰 -->
+  <div class="arc-deco">
+    <svg width="80" height="300" viewBox="0 0 80 300" fill="none">
+      <defs>
+        <linearGradient id="ag1" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%"   stop-color="#4488FF" stop-opacity="0"/>
+          <stop offset="40%"  stop-color="#4488FF" stop-opacity="0.5"/>
+          <stop offset="70%"  stop-color="#2266DD" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#2266DD" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="ag2" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%"   stop-color="#3377FF" stop-opacity="0"/>
+          <stop offset="50%"  stop-color="#3377FF" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#3377FF" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="M70 8 Q-10 150 70 292"  fill="none" stroke="url(#ag1)" stroke-width="1.5"/>
+      <path d="M50 18 Q-28 150 50 282" fill="none" stroke="url(#ag2)" stroke-width="1"/>
+      <path d="M32 36 Q-38 150 32 264" fill="none" stroke="rgba(50,100,220,0.12)" stroke-width="0.8"/>
+      <circle cx="70" cy="8"   r="3" fill="#4488FF" opacity="0.7">
+        <animate attributeName="opacity" values="0.7;0.2;0.7" dur="2.2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="70" cy="292" r="3" fill="#4488FF" opacity="0.5">
+        <animate attributeName="opacity" values="0.5;0.15;0.5" dur="2.8s" repeatCount="indefinite"/>
+      </circle>
+    </svg>
+  </div>
+
+  <!-- ══ 场景卡片 ══ -->
+
+  <!-- A 智能合同审核 -->
+  <div class="scene-card sc-1">
+    <div class="sc-icon" style="background:rgba(30,100,255,0.09)">📄</div>
+    <div>
+      <div class="sc-name">智能合同审核</div>
+      <div class="sc-desc">风险识别 · 合规检查</div>
+      <div class="sc-tag" style="background:rgba(30,100,255,0.08);color:#1A55DD;">基于标签知识库</div>
+    </div>
+  </div>
+
+  <!-- B 智能会议助手 -->
+  <div class="scene-card sc-2">
+    <div class="sc-icon" style="background:rgba(100,60,220,0.09)">🎙️</div>
+    <div>
+      <div class="sc-name">智能会议助手</div>
+      <div class="sc-desc">声纹识别 · 纪要生成</div>
+      <div class="sc-tag" style="background:rgba(100,60,220,0.08);color:#6040CC;">实时转录</div>
+    </div>
+  </div>
+
+  <!-- C 律师小助手 -->
+  <div class="scene-card sc-3">
+    <div class="sc-icon" style="background:rgba(220,130,0,0.09)">⚖️</div>
+    <div>
+      <div class="sc-name">律师小助手</div>
+      <div class="sc-desc">类案检索 · 文书生成</div>
+      <div class="sc-tag" style="background:rgba(220,130,0,0.08);color:#B06000;">法律专属</div>
+    </div>
+  </div>
+
+  <!-- D 产业链分析 -->
+  <div class="scene-card sc-4">
+    <div class="sc-icon" style="background:rgba(0,160,130,0.09)">🔗</div>
+    <div>
+      <div class="sc-name">产业链分析助手</div>
+      <div class="sc-desc">多源采集 · 图谱报告</div>
+      <div class="sc-tag" style="background:rgba(0,160,130,0.08);color:#008870;">知识图谱</div>
+    </div>
+  </div>
+
+  <!-- E 招投标 -->
+  <div class="scene-card sc-5">
+    <div class="sc-icon" style="background:rgba(200,40,100,0.09)">📋</div>
+    <div>
+      <div class="sc-name">招投标场景集合</div>
+      <div class="sc-desc">文件解析 · 差异比对</div>
+      <div class="sc-tag" style="background:rgba(200,40,100,0.08);color:#C02860;">智能生成</div>
+    </div>
+  </div>
+
+  <!-- 数据统计卡 -->
+  <div class="data-card">
+    <div class="dc-row">
+      <span class="dc-label">本日处理量</span>
+      <span class="dc-trend">↑ 23%</span>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:3px;margin-bottom:10px">
+      <span class="dc-val">4,281</span>
+      <span class="dc-unit">份</span>
+    </div>
+    <div class="dc-mini-bars">
+      <div class="dc-bar" style="height:14px;background:#C8DAFF"></div>
+      <div class="dc-bar" style="height:18px;background:#A8C4FF"></div>
+      <div class="dc-bar" style="height:12px;background:#C8DAFF"></div>
+      <div class="dc-bar" style="height:22px;background:#88AAFF"></div>
+      <div class="dc-bar" style="height:20px;background:#99B8FF"></div>
+      <div class="dc-bar" style="height:26px;background:#4488FF"></div>
+      <div class="dc-bar" style="height:28px;background:linear-gradient(180deg,#4488FF,#1A55DD)"></div>
+    </div>
+  </div>
+
+  <!-- ══ 主面板 ══ -->
+  <div class="main-panel">
+
+    <!-- 标题栏 -->
+    <div class="panel-header">
+      <div class="panel-title-group">
+        <div class="panel-logo">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="5" stroke="rgba(255,255,255,0.7)" stroke-width="1.2"/>
+            <path d="M4 7 L6 9 L10 5" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="panel-name">AI 智能处理中枢</div>
+          <div class="panel-sub">Enterprise Agent Platform</div>
+        </div>
+      </div>
+      <div class="panel-status">
+        <div class="status-dot"></div>
+        运行中
+      </div>
+    </div>
+
+    <!-- 三列主体 -->
+    <div class="panel-body">
+
+      <!-- 左：输入文件 -->
+      <div class="panel-col">
+        <div class="col-title">待处理文件</div>
+
+        <div class="doc-item active">
+          <div class="doc-icon" style="background:rgba(30,100,255,0.1)">📄</div>
+          <div class="doc-info">
+            <div class="doc-name">采购合同_2024Q1.pdf</div>
+            <div class="doc-meta">合同审核 · 48页</div>
+          </div>
+          <div class="doc-badge" style="background:rgba(30,100,255,0.1);color:#1A55DD;">处理中</div>
+        </div>
+
+        <div class="doc-item">
+          <div class="doc-icon" style="background:rgba(100,60,220,0.09)">🎙️</div>
+          <div class="doc-info">
+            <div class="doc-name">项目周会_0326.mp3</div>
+            <div class="doc-meta">会议纪要 · 62分钟</div>
+          </div>
+          <div class="doc-badge" style="background:rgba(10,160,90,0.1);color:#0A9E5C;">完成</div>
+        </div>
+
+        <div class="doc-item">
+          <div class="doc-icon" style="background:rgba(200,40,100,0.08)">📋</div>
+          <div class="doc-info">
+            <div class="doc-name">招标文件_XX项目.docx</div>
+            <div class="doc-meta">招投标 · 156页</div>
+          </div>
+          <div class="doc-badge" style="background:rgba(200,130,0,0.1);color:#B06000;">排队</div>
+        </div>
+
+        <div class="doc-item">
+          <div class="doc-icon" style="background:rgba(0,160,130,0.08)">🔗</div>
+          <div class="doc-info">
+            <div class="doc-name">新能源产业链数据集</div>
+            <div class="doc-meta">产业分析 · 多源</div>
+          </div>
+          <div class="doc-badge" style="background:rgba(200,130,0,0.1);color:#B06000;">排队</div>
+        </div>
+
+      </div>
+
+      <!-- 中：AI处理流 -->
+      <div class="process-col">
+        <div class="proc-title">AI 处理</div>
+
+        <div class="proc-node">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <rect x="2" y="3" width="12" height="10" rx="2" stroke="rgba(255,255,255,0.7)" stroke-width="1.2"/>
+            <path d="M5 7h6M5 9.5h4" stroke="white" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+          <div class="proc-node-label">解析</div>
+        </div>
+        <div class="proc-connector"></div>
+        <div class="proc-node">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="5" stroke="rgba(255,255,255,0.7)" stroke-width="1.2"/>
+            <path d="M6 8l1.5 1.5L10 6" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="proc-node-label">理解</div>
+        </div>
+        <div class="proc-connector"></div>
+        <div class="proc-node" style="background:linear-gradient(135deg,#0070D8,#3399FF)">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M4 12 L8 4 L12 12" stroke="rgba(255,255,255,0.8)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5.5 9.5h5" stroke="rgba(255,255,255,0.6)" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+          <div class="proc-node-label">推理</div>
+        </div>
+        <div class="proc-connector"></div>
+        <div class="proc-node" style="background:linear-gradient(135deg,#00875A,#00B36B)">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <rect x="3" y="4" width="10" height="8" rx="1.5" stroke="rgba(255,255,255,0.7)" stroke-width="1.2"/>
+            <path d="M6 7.5h4M6 9.5h2.5" stroke="white" stroke-width="1" stroke-linecap="round"/>
+            <path d="M5 2.5 L8 1 L11 2.5" stroke="rgba(255,255,255,0.5)" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="proc-node-label">输出</div>
+        </div>
+      </div>
+
+      <!-- 右：输出结果 -->
+      <div class="panel-col">
+        <div class="col-title">智能输出</div>
+
+        <div class="result-item blue">
+          <div class="result-icon" style="background:rgba(30,100,255,0.1)">⚠️</div>
+          <div>
+            <div class="result-name">风险条款报告</div>
+            <div class="result-desc">识别 3 处高风险<br>条款，附修改建议</div>
+          </div>
+        </div>
+
+        <div class="result-item">
+          <div class="result-icon" style="background:rgba(10,160,90,0.1)">📝</div>
+          <div>
+            <div class="result-name">会议纪要 · 已完成</div>
+            <div class="result-desc">提取 7 项待办<br>4 个决策事项</div>
+          </div>
+        </div>
+
+        <div class="result-item blue">
+          <div class="result-icon" style="background:rgba(30,100,255,0.08)">📊</div>
+          <div>
+            <div class="result-name">招标要点摘要</div>
+            <div class="result-desc">关键条件 · 评分<br>标准 · 差异对比</div>
+          </div>
+        </div>
+
+        <div class="result-item" style="background:rgba(0,160,130,0.04);border-color:rgba(0,160,130,0.12)">
+          <div class="result-icon" style="background:rgba(0,160,130,0.09)">🗺️</div>
+          <div>
+            <div class="result-name">产业图谱报告</div>
+            <div class="result-desc">上下游链路 · 竞<br>争格局可视化</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 底部进度栏 -->
+    <div class="panel-footer">
+      <div class="pf-label">今日处理进度</div>
+      <div class="pf-bar-wrap"><div class="pf-bar"></div></div>
+      <div class="pf-pct">73%</div>
+      <div class="pf-count">4,281 / 5,860 份</div>
+    </div>
+
+  </div>
+  <div class="panel-glow"></div>
+
+  <!-- 底部文字 -->
+  <div class="hero-text">
+    <div class="ht-main">文件进来，结果出去 — 全程 AI 自动化</div>
+    <div class="ht-sub">覆盖合同 · 会议 · 法务 · 产业 · 招投标 五大核心场景</div>
+  </div>
+
+</div>
+
+<script>
+// 背景粒子
+const bg = document.getElementById('bg');
+for (let i = 0; i < 22; i++) {
+  const p = document.createElement('div');
+  p.className = 'bg-particle';
+  const s = Math.random() * 5 + 2;
+  p.style.cssText = `
+    width:${s}px;height:${s}px;
+    left:${Math.random()*100}%;
+    animation-duration:${Math.random()*18+12}s;
+    animation-delay:-${Math.random()*18}s;
+  `;
+  bg.appendChild(p);
+}
+</script>
+</body>
+</html>

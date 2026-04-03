@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>场景解决方案中心</title>
+<style>
+  *, *::before, *::after { box-sizing: box-sizing; margin: 0; padding: 0; }
+  :root {
+    --bg:    #F4F6FC;
+    --text:  #0B1E3D;
+    --dim:   rgba(11,30,61,0.50);
+    --dimmer:rgba(11,30,61,0.30);
+    --border:rgba(0,47,167,0.08);
+    --klein: #002FA7;
+  }
+  html { font-size: 16px; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'PingFang SC', 'Noto Sans SC', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── AMBIENT ── */
+  .bg-glow { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .bg-orb  { position: absolute; border-radius: 50%; filter: blur(90px); }
+
+  /* ── NAV ── */
+  nav {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 60px; height: 68px;
+    border-bottom: 1px solid rgba(0,47,167,0.08);
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(20px);
+  }
+  .nav-logo {
+    font-size: 17px; font-weight: 800; color: var(--text);
+    letter-spacing: -0.5px; text-decoration: none;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-mark {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: linear-gradient(135deg, #002FA7, #1A6BFF);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-links { display: flex; gap: 32px; }
+  .nav-links a { font-size: 14px; color: var(--dim); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover, .nav-links a.active { color: var(--text); }
+  .nav-cta {
+    font-size: 13px; font-weight: 600; color: #FFFFFF;
+    background: linear-gradient(135deg, #002FA7, #1A6BFF);
+    padding: 8px 20px; border-radius: 8px; text-decoration: none;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+  .nav-cta:hover { opacity: 0.85; transform: translateY(-1px); }
+
+  /* ── PAGE ── */
+  .page { position: relative; z-index: 1; padding: 64px 0 72px; }
+
+  /* ── HEADER ── */
+  .header { text-align: center; margin-bottom: 56px; position: relative; overflow: visible; padding: 20px 0 10px; }
+
+  /* 标题背景光晕 */
+  .header-bg-glow {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px; height: 320px;
+    background: radial-gradient(ellipse 60% 70% at 50% 50%,
+      rgba(0,47,167,0.07) 0%, rgba(0,47,167,0.03) 50%, transparent 75%);
+    pointer-events: none; z-index: 0;
+  }
+  .header > *:not(.header-bg-glow):not(.h-icon) { position: relative; z-index: 1; }
+
+  /* 3D 悬浮 icon 通用 */
+  .h-icon {
+    position: absolute; pointer-events: none; z-index: 2;
+    animation: hFloat ease-in-out infinite;
+  }
+  @keyframes hFloat {
+    0%,100% { transform: translateY(0px) rotateZ(var(--rz,0deg)); }
+    50%      { transform: translateY(-10px) rotateZ(var(--rz,0deg)); }
+  }
+
+  /* 立体小方块 */
+  .h-cube {
+    width: 38px; height: 38px;
+    transform-style: preserve-3d;
+    perspective: 160px;
+    animation: hFloat ease-in-out infinite, cubeRotate 10s linear infinite;
+  }
+  @keyframes cubeRotate {
+    from { transform: translateY(0) rotateX(20deg) rotateY(0deg); }
+    50%  { transform: translateY(-10px) rotateX(20deg) rotateY(180deg); }
+    to   { transform: translateY(0) rotateX(20deg) rotateY(360deg); }
+  }
+  .cube-face {
+    position: absolute; border-radius: 4px;
+    border: 1px solid rgba(0,47,167,0.35);
+  }
+  .cube-front { width:26px;height:26px; background:rgba(0,47,167,0.18); top:6px;left:6px; transform:translateZ(13px); }
+  .cube-back  { width:26px;height:26px; background:rgba(0,47,167,0.08); top:6px;left:6px; transform:rotateY(180deg) translateZ(13px); }
+  .cube-right { width:26px;height:26px; background:rgba(0,47,167,0.12); top:6px;left:6px; transform:rotateY(90deg) translateZ(13px); }
+  .cube-left  { width:26px;height:26px; background:rgba(0,47,167,0.12); top:6px;left:6px; transform:rotateY(-90deg) translateZ(13px); }
+  .cube-top   { width:26px;height:26px; background:rgba(0,47,167,0.25); top:6px;left:6px; transform:rotateX(90deg) translateZ(13px); }
+
+  /* 立体球 */
+  .h-sphere {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 32%, rgba(80,130,255,0.6) 0%, rgba(0,47,167,0.75) 55%, rgba(0,20,80,0.9) 100%);
+    box-shadow:
+      0 6px 22px rgba(0,47,167,0.45),
+      inset -4px -4px 10px rgba(0,0,100,0.35),
+      inset 3px 3px 8px rgba(140,180,255,0.45);
+    animation: hFloat ease-in-out infinite, spherePulse 3s ease-in-out infinite;
+  }
+  @keyframes spherePulse {
+    0%,100% { box-shadow: 0 6px 22px rgba(0,47,167,0.45), inset -4px -4px 10px rgba(0,0,100,0.35), inset 3px 3px 8px rgba(140,180,255,0.45); }
+    50%      { box-shadow: 0 8px 32px rgba(0,47,167,0.65), inset -4px -4px 10px rgba(0,0,100,0.35), inset 3px 3px 8px rgba(140,180,255,0.55); }
+  }
+
+  /* 立体菱形 */
+  .h-diamond {
+    width: 28px; height: 28px;
+    background: linear-gradient(145deg, rgba(0,80,220,0.7) 0%, rgba(0,47,167,0.9) 60%, rgba(0,20,80,0.8) 100%);
+    transform: rotate(45deg);
+    border-radius: 4px;
+    box-shadow: 0 4px 18px rgba(0,47,167,0.5), inset 1px 1px 4px rgba(140,180,255,0.5);
+    animation: hFloat ease-in-out infinite, diamondSpin 8s linear infinite;
+  }
+  @keyframes diamondSpin {
+    from { transform: rotate(45deg) rotateY(0deg); }
+    to   { transform: rotate(45deg) rotateY(360deg); }
+  }
+
+  /* 环形 */
+  .h-ring {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 5px solid rgba(0,47,167,0.7);
+    box-shadow: 0 0 0 1px rgba(0,47,167,0.15), 0 4px 16px rgba(0,47,167,0.35), inset 0 0 8px rgba(80,140,255,0.2);
+    animation: hFloat ease-in-out infinite, ringRotate 6s linear infinite;
+  }
+  @keyframes ringRotate {
+    from { transform: rotateX(60deg) rotateZ(0deg); }
+    to   { transform: rotateX(60deg) rotateZ(360deg); }
+  }
+
+  /* 小三角 */
+  .h-tri {
+    width: 0; height: 0;
+    border-left: 13px solid transparent;
+    border-right: 13px solid transparent;
+    border-bottom: 22px solid rgba(0,47,167,0.55);
+    filter: drop-shadow(0 4px 10px rgba(0,47,167,0.4));
+    animation: hFloat ease-in-out infinite;
+  }
+
+  /* icon 各自位置 & 动画延迟 */
+  .h-i1 { left: calc(50% - 380px); top: 28px;  --rz:0deg;  animation-duration:3.8s; animation-delay:0s; }
+  .h-i2 { left: calc(50% - 300px); top: 82px;  --rz:0deg;  animation-duration:4.4s; animation-delay:-1.2s; }
+  .h-i3 { left: calc(50% + 320px); top: 14px;  --rz:15deg; animation-duration:3.5s; animation-delay:-0.5s; }
+  .h-i4 { left: calc(50% + 350px); top: 76px;  --rz:0deg;  animation-duration:4.1s; animation-delay:-2s; }
+  .h-i5 { left: calc(50% - 340px); top: 130px; --rz:-10deg;animation-duration:4.8s; animation-delay:-1.8s; }
+  .h-i6 { left: calc(50% + 290px); top: 118px; --rz:10deg; animation-duration:3.9s; animation-delay:-0.9s; }
+
+  /* ── STAGE RINGS（底座同心圆）── */
+  .stage-rings {
+    position: absolute;
+    bottom: -60px; left: 50%;
+    transform: translateX(-50%);
+    width: 1060px; height: 190px;
+    pointer-events: none; z-index: 0;
+  }
+  .stage-rings svg { width:100%; height:100%; overflow:visible; }
+  .header-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(0,47,167,0.06); border: 1px solid rgba(0,47,167,0.15);
+    border-radius: 100px; padding: 6px 16px;
+    font-size: 12px; font-weight: 600; color: #2A5FEA;
+    letter-spacing: 0.5px; margin-bottom: 20px;
+  }
+  .badge-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: #002FA7;
+    box-shadow: 0 0 8px rgba(0,47,167,0.5);
+    animation: dotPulse 2s ease-in-out infinite;
+  }
+  @keyframes dotPulse {
+    0%,100% { box-shadow: 0 0 6px rgba(0,47,167,0.4); }
+    50%      { box-shadow: 0 0 16px rgba(0,47,167,0.5), 0 0 28px rgba(0,47,167,0.2); }
+  }
+  .header h1 {
+    font-size: clamp(32px, 4.5vw, 54px); font-weight: 800;
+    letter-spacing: -2px; line-height: 1.1; margin-bottom: 14px;
+    color: var(--text);
+  }
+  .grad-text {
+    background: linear-gradient(135deg, #002FA7 0%, #1A6BFF 40%, #00C6FF 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header p { font-size: 16px; color: var(--dim); max-width: 480px; margin: 0 auto; line-height: 1.7; }
+
+  /* ── STAGE ── */
+  .stage {
+    position: relative;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 660px;
+    perspective: 1400px;
+    overflow: visible;
+  }
+
+  /* ── CARD BASE ── */
+  .scene-card {
+    position: absolute;
+    width: 960px;
+    border-radius: 24px;
+    border: 1px solid rgba(0,47,167,0.08);
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(24px);
+    box-shadow: 0 4px 24px rgba(0,47,167,0.04), 0 1px 3px rgba(0,47,167,0.06);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.52s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center center;
+    will-change: transform, opacity;
+  }
+
+  /* positions */
+  .scene-card.pos-left-far  { transform: translateX(-740px) scale(0.72) rotateY(14deg); opacity: 0; pointer-events: none; z-index: 1; }
+  .scene-card.pos-left      { transform: translateX(-530px) scale(0.8)  rotateY(9deg);  opacity: 0.45; pointer-events: all; z-index: 3; filter: brightness(0.92); }
+  .scene-card.pos-center    { transform: translateX(0)       scale(1)    rotateY(0deg);  opacity: 1;   pointer-events: all; z-index: 10; filter: brightness(1); }
+  .scene-card.pos-right     { transform: translateX(530px)   scale(0.8)  rotateY(-9deg); opacity: 0.45; pointer-events: all; z-index: 3; filter: brightness(0.92); }
+  .scene-card.pos-right-far { transform: translateX(740px)   scale(0.72) rotateY(-14deg);opacity: 0; pointer-events: none; z-index: 1; }
+
+  .scene-card.pos-left:hover  { opacity: 0.6; filter: brightness(0.96); }
+  .scene-card.pos-right:hover { opacity: 0.6; filter: brightness(0.96); }
+
+  /* prism top-edge shimmer — only on active */
+  .scene-card.pos-center {
+    border-color: rgba(0,47,167,0.2);
+    box-shadow:
+      0 12px 48px rgba(0,47,167,0.10),
+      0 4px 12px rgba(0,47,167,0.06),
+      0 0 0 1px rgba(0,47,167,0.08);
+  }
+  .card-glow-top {
+    position: absolute; top: 0; left: 0; right: 0; height: 320px;
+    pointer-events: none; opacity: 0; transition: opacity 0.5s;
+    border-radius: 24px 24px 0 0;
+  }
+  .card-top-line {
+    position: absolute; top: 0; left: 8%; right: 8%; height: 2px;
+    border-radius: 1px; opacity: 0; transition: opacity 0.5s;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(0,47,167,0.6) 15%,
+      rgba(130,200,255,0.9) 30%,
+      rgba(255,180,255,0.8) 45%,
+      #FFFFFF     55%,
+      rgba(130,200,255,0.9) 70%,
+      rgba(0,47,167,0.6) 85%,
+      transparent 100%
+    );
+    filter: blur(0.3px);
+  }
+  .scene-card.pos-center .card-glow-top,
+  .scene-card.pos-center .card-top-line { opacity: 1; }
+
+  /* ── CARD LAYOUT ── */
+  .card-body {
+    position: relative; z-index: 2;
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    min-height: 620px;
+  }
+
+  /* ── LEFT PANEL ── */
+  .card-left {
+    padding: 40px 36px 36px 40px;
+    display: flex; flex-direction: column;
+    border-right: 1px solid rgba(0,47,167,0.07);
+  }
+
+  .card-tag {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; border-radius: 7px; padding: 5px 12px;
+    margin-bottom: 20px; width: fit-content;
+  }
+  .card-icon-name {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 14px;
+  }
+  .card-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.4s;
+  }
+  .scene-card.pos-center .card-icon { transform: scale(1.06); }
+  .card-name {
+    font-size: 26px; font-weight: 800; letter-spacing: -0.8px;
+    line-height: 1.2; color: var(--text);
+  }
+  .card-desc {
+    font-size: 14px; color: var(--dim); line-height: 1.75;
+    margin-bottom: 20px;
+  }
+
+  /* ── SCENE ILLUSTRATION ── */
+  .card-illustration {
+    width: 100%;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(0,47,167,0.10);
+    margin-bottom: 20px;
+    flex-shrink: 0;
+    background: #EDF1F9;
+    transition: border-color 0.4s;
+  }
+  .scene-card.pos-center .card-illustration { border-color: rgba(0,47,167,0.20); }
+  .card-illustration svg { display: block; width: 100%; height: auto; }
+
+  /* Value chips */
+  .card-values { display: flex; flex-wrap: wrap; gap: 7px; margin-top: auto; }
+  .value-chip {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(0,47,167,0.04);
+    border: 1px solid rgba(0,47,167,0.10);
+    border-radius: 7px; padding: 6px 11px;
+    font-size: 12px; color: rgba(11,30,61,0.65);
+  }
+  .value-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+  /* ── RIGHT PANEL ── */
+  .card-right {
+    padding: 40px 40px 36px 36px;
+    display: flex; flex-direction: column;
+  }
+  .card-right-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--dimmer);
+    margin-bottom: 18px;
+  }
+  .features-list { display: flex; flex-direction: column; gap: 0; flex: 1; }
+  .feature-item {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(0,47,167,0.06);
+  }
+  .feature-item:first-child { padding-top: 0; }
+  .feature-item:last-child  { border-bottom: none; }
+  .feature-icon {
+    width: 32px; height: 32px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .feature-body h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
+  .feature-body p  { font-size: 13px; color: var(--dim); line-height: 1.62; }
+
+  /* CTA row */
+  .card-cta-row {
+    margin-top: 20px; padding-top: 18px;
+    border-top: 1px solid rgba(0,47,167,0.08);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-cta-hint { font-size: 13px; color: var(--dimmer); }
+  .card-cta-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 700;
+    padding: 9px 18px; border-radius: 9px;
+    text-decoration: none; color: #FFFFFF;
+    transition: opacity 0.2s, transform 0.15s;
+    opacity: 0; pointer-events: none;
+  }
+  .scene-card.pos-center .card-cta-btn { opacity: 1; pointer-events: all; }
+  .card-cta-btn:hover { opacity: 0.82; transform: translateY(-1px); }
+
+  /* ── CONTROLS ── */
+  .controls {
+    display: flex; align-items: center; justify-content: center;
+    gap: 20px; margin-top: 44px;
+  }
+  .nav-btn {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(0,47,167,0.12);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text);
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,47,167,0.06);
+  }
+  .nav-btn:hover { background: rgba(0,47,167,0.08); border-color: rgba(0,47,167,0.30); transform: scale(1.08); }
+  .nav-btn:active { transform: scale(0.95); }
+
+  .dots { display: flex; gap: 7px; align-items: center; }
+  .dot {
+    height: 6px; width: 6px; border-radius: 3px;
+    background: rgba(0,47,167,0.15);
+    cursor: pointer;
+    transition: all 0.36s cubic-bezier(0.4,0,0.2,1);
+  }
+  .dot.active { width: 30px; }
+  .dot:not(.active):hover { background: rgba(0,47,167,0.30); }
+
+  .kb-hint {
+    text-align: center; margin-top: 22px;
+    font-size: 12px; color: rgba(11,30,61,0.20);
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+  }
+  .kb-key {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 20px; border-radius: 4px;
+    border: 1px solid rgba(0,47,167,0.15);
+    background: rgba(255,255,255,0.7);
+    font-size: 10px; color: rgba(11,30,61,0.35);
+  }
+
+  /* ── DETAIL PAGE ── */
+  .detail-page {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: #F4F6FC; overflow-y: auto;
+  }
+  .detail-page.visible {
+    display: block;
+    animation: pageIn 0.42s cubic-bezier(0.4,0,0.2,1) forwards;
+  }
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .detail-nav {
+    position: sticky; top: 0; z-index: 10;
+    padding: 0 60px; height: 64px;
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0,47,167,0.08);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; font-size: 14px; color: var(--dim);
+    transition: color 0.2s; background: none; border: none; padding: 0;
+  }
+  .back-btn:hover { color: var(--text); }
+  .back-btn:hover svg { transform: translateX(-3px); }
+  .back-btn svg { transition: transform 0.2s; }
+  .detail-nav-logo { font-size: 15px; font-weight: 800; color: rgba(11,30,61,0.3); }
+
+  .detail-body { max-width: 920px; margin: 0 auto; padding: 72px 60px 100px; }
+  .detail-tag {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; border-radius: 7px; padding: 5px 12px;
+    margin-bottom: 18px;
+  }
+  .detail-title {
+    font-size: clamp(34px, 5vw, 54px); font-weight: 800;
+    letter-spacing: -2px; line-height: 1.1; margin-bottom: 16px;
+  }
+  .detail-sub { font-size: 17px; color: var(--dim); line-height: 1.75; max-width: 640px; margin-bottom: 48px; }
+  .detail-divider { height: 1px; background: rgba(0,47,167,0.08); margin: 44px 0; }
+  .d-section { margin-bottom: 52px; }
+  .d-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--dimmer); margin-bottom: 20px;
+  }
+  .d-values { display: flex; flex-wrap: wrap; gap: 10px; }
+  .d-value {
+    display: flex; align-items: center; gap: 9px;
+    background: rgba(255,255,255,0.8);
+    border: 1px solid rgba(0,47,167,0.10);
+    border-radius: 10px; padding: 11px 16px;
+    font-size: 14px; color: rgba(11,30,61,0.72);
+  }
+  .d-value-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .d-features { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .d-feature {
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(0,47,167,0.08);
+    border-radius: 14px; padding: 22px;
+  }
+  .d-feature-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+  }
+  .d-feature h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .d-feature p  { font-size: 13px; color: var(--dim); line-height: 1.65; }
+  .d-flow { display: flex; flex-direction: column; }
+  .d-step {
+    display: flex; gap: 16px; align-items: flex-start;
+    padding: 20px 0; border-bottom: 1px solid rgba(0,47,167,0.06);
+  }
+  .d-step:last-child { border-bottom: none; }
+  .d-step-num {
+    width: 28px; height: 28px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800; flex-shrink: 0;
+  }
+  .d-step h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .d-step p  { font-size: 13px; color: var(--dim); line-height: 1.6; }
+  .d-cta {
+    border-radius: 20px; padding: 44px; text-align: center; margin-top: 8px;
+    background: rgba(255,255,255,0.8);
+    border: 1px solid rgba(0,47,167,0.12);
+  }
+  .d-cta h3 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 10px; color: var(--text); }
+  .d-cta p  { font-size: 15px; color: var(--dim); margin-bottom: 28px; line-height: 1.65; }
+  .btn-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: #FFFFFF; font-size: 15px; font-weight: 700;
+    padding: 13px 28px; border-radius: 10px; text-decoration: none;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+  .btn-cta:hover { opacity: 0.88; transform: translateY(-2px); }
+
+  /* ── DIFY WORKFLOW ── */
+  .dify-section { margin-bottom: 52px; }
+  .dify-label-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+  }
+  .dify-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(0,47,167,0.06); border: 1px solid rgba(0,47,167,0.15);
+    border-radius: 6px; padding: 4px 10px;
+    font-size: 11px; font-weight: 700; color: #002FA7; letter-spacing: 0.5px;
+  }
+  .dify-badge svg { flex-shrink: 0; }
+  .dify-canvas {
+    width: 100%; overflow-x: auto; padding-bottom: 8px;
+  }
+  .dify-flow {
+    position: relative;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(0,47,167,0.08);
+    border-radius: 16px;
+    overflow: visible;
+  }
+  .dify-flow-inner {
+    position: relative;
+  }
+  .dify-col {
+    position: absolute;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .dify-svg-layer {
+    position: absolute; top: 0; left: 0;
+    pointer-events: none; overflow: visible;
+  }
+  /* node types */
+  .dify-node {
+    border-radius: 10px; padding: 10px 14px; min-width: 110px; max-width: 136px;
+    border: 1.5px solid transparent;
+    position: relative; cursor: default;
+    transition: box-shadow 0.2s, transform 0.15s;
+  }
+  .dify-node:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,47,167,0.10); }
+  .dify-node-header {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 5px;
+  }
+  .dify-node-icon {
+    width: 20px; height: 20px; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .dify-node-type {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; opacity: 0.55;
+  }
+  .dify-node-title {
+    font-size: 12px; font-weight: 700; color: #0B1E3D; line-height: 1.3; margin-bottom: 3px;
+  }
+  .dify-node-desc {
+    font-size: 10.5px; color: rgba(11,30,61,0.5); line-height: 1.45;
+  }
+  /* node variant colors */
+  .dify-node.type-start   { background: rgba(22,163,74,0.07);  border-color: rgba(22,163,74,0.30); }
+  .dify-node.type-start .dify-node-icon { background: rgba(22,163,74,0.15); color: #16A34A; }
+  .dify-node.type-start .dify-node-type { color: #16A34A; }
+
+  .dify-node.type-llm     { background: rgba(0,47,167,0.06);   border-color: rgba(0,47,167,0.22); }
+  .dify-node.type-llm .dify-node-icon { background: rgba(0,47,167,0.12); color: #002FA7; }
+  .dify-node.type-llm .dify-node-type { color: #002FA7; }
+
+  .dify-node.type-tool    { background: rgba(124,58,237,0.06); border-color: rgba(124,58,237,0.22); }
+  .dify-node.type-tool .dify-node-icon { background: rgba(124,58,237,0.12); color: #7C3AED; }
+  .dify-node.type-tool .dify-node-type { color: #7C3AED; }
+
+  .dify-node.type-code    { background: rgba(15,118,110,0.06); border-color: rgba(15,118,110,0.22); }
+  .dify-node.type-code .dify-node-icon { background: rgba(15,118,110,0.12); color: #0F766E; }
+  .dify-node.type-code .dify-node-type { color: #0F766E; }
+
+  .dify-node.type-if      { background: rgba(217,119,6,0.07);  border-color: rgba(217,119,6,0.28); }
+  .dify-node.type-if .dify-node-icon { background: rgba(217,119,6,0.15); color: #D97706; }
+  .dify-node.type-if .dify-node-type { color: #D97706; }
+
+  .dify-node.type-kb      { background: rgba(236,72,153,0.06); border-color: rgba(236,72,153,0.22); }
+  .dify-node.type-kb .dify-node-icon { background: rgba(236,72,153,0.12); color: #DB2777; }
+  .dify-node.type-kb .dify-node-type { color: #DB2777; }
+
+  .dify-node.type-end     { background: rgba(30,30,40,0.05);   border-color: rgba(30,30,40,0.18); }
+  .dify-node.type-end .dify-node-icon { background: rgba(30,30,40,0.10); color: #374151; }
+  .dify-node.type-end .dify-node-type { color: #374151; }
+
+  .dify-node.type-http    { background: rgba(8,145,178,0.06);  border-color: rgba(8,145,178,0.22); }
+  .dify-node.type-http .dify-node-icon { background: rgba(8,145,178,0.12); color: #0891B2; }
+  .dify-node.type-http .dify-node-type { color: #0891B2; }
+
+  .dify-branch-label {
+    font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 4px;
+    margin-bottom: 2px; text-align: center;
+  }
+  .dify-branch-yes { background: rgba(22,163,74,0.12); color: #16A34A; }
+  .dify-branch-no  { background: rgba(217,119,6,0.12); color: #D97706; }
+</style>
+</head>
+<body>
+
+<div class="bg-glow" id="bgGlow"></div>
+
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="logo-mark">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M3 12l4-5 3 3 3-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    AgentOS
+  </a>
+  <div class="nav-links">
+    <a href="#">产品</a>
+    <a href="#" class="active">场景方案</a>
+    <a href="#">客户案例</a>
+    <a href="#">平台能力</a>
+    <a href="#">定价</a>
+  </div>
+  <a class="nav-cta" href="#">申请演示</a>
+</nav>
+
+<div class="page" id="mainPage">
+  <div class="header">
+    <div class="header-bg-glow"></div>
+
+    <!-- 左侧悬浮 3D icon -->
+    <div class="h-icon h-i1">
+      <div class="h-cube">
+        <div class="cube-face cube-front"></div>
+        <div class="cube-face cube-back"></div>
+        <div class="cube-face cube-right"></div>
+        <div class="cube-face cube-left"></div>
+        <div class="cube-face cube-top"></div>
+      </div>
+    </div>
+    <div class="h-icon h-i2 h-sphere" style="--rz:0deg;animation-duration:4.4s;animation-delay:-1.2s"></div>
+    <div class="h-icon h-i5 h-tri" style="animation-duration:4.8s;animation-delay:-1.8s"></div>
+
+    <!-- 右侧悬浮 3D icon -->
+    <div class="h-icon h-i3 h-diamond" style="animation-duration:3.5s;animation-delay:-0.5s"></div>
+    <div class="h-icon h-i4 h-ring" style="animation-duration:4.1s;animation-delay:-2s"></div>
+    <div class="h-icon h-i6">
+      <svg width="30" height="30" viewBox="0 0 30 30" fill="none" style="filter:drop-shadow(0 4px 12px rgba(0,47,167,0.45))">
+        <polygon points="15,2 28,22 2,22" fill="none" stroke="rgba(0,47,167,0.65)" stroke-width="2" stroke-linejoin="round"/>
+        <polygon points="15,8 23,20 7,20" fill="rgba(0,47,167,0.18)" stroke="none"/>
+      </svg>
+    </div>
+
+    <div class="header-badge"><div class="badge-dot"></div>AI 智能体解决方案</div>
+    <h1>5 大核心场景<br><span class="grad-text">覆盖企业核心业务链路</span></h1>
+    <p>每个场景均经过多家企业打磨验证，开箱即用，快速落地</p>
+  </div>
+  <div class="stage" id="stage">
+    <!-- 底座同心圆光圈 -->
+    <div class="stage-rings">
+      <svg viewBox="0 0 1060 190" fill="none">
+        <defs>
+          <radialGradient id="srg" cx="50%" cy="40%" r="50%">
+            <stop offset="0%" stop-color="#002FA7" stop-opacity="0.12"/>
+            <stop offset="100%" stop-color="#002FA7" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="sglow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="sglow2"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <!-- 光晕底面 -->
+        <ellipse cx="530" cy="100" rx="420" ry="56" fill="url(#srg)"/>
+        <!-- 同心圆 由内到外 -->
+        <ellipse cx="530" cy="94"  rx="140" ry="18" fill="none" stroke="#002FA7" stroke-width="1.6" opacity="0.6" filter="url(#sglow)"/>
+        <ellipse cx="530" cy="98"  rx="220" ry="28" fill="none" stroke="#1A4FCC" stroke-width="1.3" opacity="0.38"/>
+        <ellipse cx="530" cy="103" rx="310" ry="39" fill="none" stroke="#1A4FCC" stroke-width="1"   opacity="0.22"/>
+        <ellipse cx="530" cy="108" rx="400" ry="50" fill="none" stroke="#1A4FCC" stroke-width="0.8" opacity="0.13"/>
+        <ellipse cx="530" cy="113" rx="490" ry="62" fill="none" stroke="#1A4FCC" stroke-width="0.6" opacity="0.07"/>
+        <!-- 中心脉冲亮点 -->
+        <ellipse cx="530" cy="94" rx="80" ry="10" fill="#002FA7" opacity="0.1" filter="url(#sglow2)"/>
+        <ellipse cx="530" cy="94" rx="36" ry="5"  fill="#002FA7" opacity="0.22" filter="url(#sglow)">
+          <animate attributeName="opacity" values="0.22;0.45;0.22" dur="2.4s" repeatCount="indefinite"/>
+        </ellipse>
+        <!-- 舞台反光线 -->
+        <path d="M390 94 L390 72 L670 72 L670 94" fill="rgba(0,47,167,0.03)" stroke="rgba(0,47,167,0.07)" stroke-width="0.8"/>
+      </svg>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="nav-btn" id="prevBtn">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="dots" id="dots"></div>
+    <button class="nav-btn" id="nextBtn">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 4l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+  <div class="kb-hint">
+    <span class="kb-key">←</span><span>/</span><span class="kb-key">→</span>
+    <span>键盘切换 &nbsp;·&nbsp; 点击激活卡片查看详情</span>
+  </div>
+</div>
+
+<div class="detail-page" id="detailPage">
+  <div class="detail-nav">
+    <button class="back-btn" id="backBtn">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      返回场景总览
+    </button>
+    <div class="detail-nav-logo">AgentOS</div>
+  </div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+<script>
+// ── SCENE ILLUSTRATIONS (Light theme SVG) ──────────────────────
+const LB = '#EDF1F9';
+const LB2 = 'rgba(255,255,255,0.7)';
+
+const ILLUSTRATIONS = [
+  // 0: 智能合同审核 — 文档树+标签库+AI引擎+风险报告
+  (color) => `
+  <svg viewBox="0 0 320 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="320" height="160" fill="${LB}"/>
+    <!-- 合同文件堆 -->
+    <rect x="8" y="40" width="62" height="80" rx="5" fill="rgba(255,255,255,0.5)" stroke="rgba(0,47,167,0.10)" stroke-width="1" transform="rotate(-4 8 40)"/>
+    <rect x="10" y="38" width="62" height="80" rx="5" fill="rgba(255,255,255,0.65)" stroke="rgba(0,47,167,0.12)" stroke-width="1" transform="rotate(-2 10 38)"/>
+    <rect x="12" y="36" width="62" height="82" rx="5" fill="white" stroke="rgba(0,47,167,0.16)" stroke-width="1"/>
+    <!-- 文件头 -->
+    <rect x="20" y="44" width="30" height="4" rx="2" fill="${color}" opacity="0.7"/>
+    <rect x="20" y="53" width="46" height="2.5" rx="1.25" fill="rgba(0,47,167,0.12)"/>
+    <rect x="20" y="59" width="42" height="2.5" rx="1.25" fill="rgba(0,47,167,0.12)"/>
+    <!-- 风险高亮行 -->
+    <rect x="18" y="66" width="50" height="8" rx="2.5" fill="${color}18"/>
+    <rect x="18" y="66" width="3" height="8" rx="1.5" fill="${color}"/>
+    <rect x="25" y="69" width="30" height="2" rx="1" fill="${color}70"/>
+    <rect x="20" y="79" width="44" height="2.5" rx="1.25" fill="rgba(0,47,167,0.12)"/>
+    <!-- 标签徽章 -->
+    <rect x="18" y="85" width="20" height="8" rx="4" fill="${color}20" stroke="${color}50" stroke-width="0.8"/>
+    <rect x="42" y="85" width="20" height="8" rx="4" fill="rgba(217,119,6,0.12)" stroke="rgba(217,119,6,0.4)" stroke-width="0.8"/>
+    <rect x="18" y="97" width="44" height="2.5" rx="1.25" fill="rgba(0,47,167,0.08)"/>
+    <rect x="18" y="104" width="38" height="2.5" rx="1.25" fill="rgba(0,47,167,0.08)"/>
+    <!-- 中间：AI引擎 -->
+    <rect x="86" y="52" width="56" height="56" rx="12" fill="${color}15" stroke="${color}40" stroke-width="1.2"/>
+    <text x="114" y="75" font-size="8" fill="${color}" text-anchor="middle" font-family="sans-serif" font-weight="800">AI</text>
+    <text x="114" y="86" font-size="6" fill="${color}80" text-anchor="middle" font-family="sans-serif">审核引擎</text>
+    <!-- 知识库标签 -->
+    <rect x="90" y="97" width="48" height="7" rx="3.5" fill="${color}25"/>
+    <text x="114" y="103" font-size="5.5" fill="${color}" text-anchor="middle" font-family="sans-serif" font-weight="600">标签知识库</text>
+    <!-- 脉冲圈 -->
+    <circle cx="114" cy="80" r="32" stroke="${color}" stroke-width="0.8" opacity="0.15">
+      <animate attributeName="r" values="28;38;28" dur="2.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.2;0;0.2" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <!-- 流向箭头 -->
+    <path d="M78 80 L86 80" stroke="${color}50" stroke-width="1.5" stroke-dasharray="3 2"/>
+    <path d="M142 80 L152 80" stroke="${color}50" stroke-width="1.5" stroke-dasharray="3 2"/>
+    <!-- 右：报告面板 -->
+    <rect x="154" y="26" width="156" height="108" rx="8" fill="white" stroke="rgba(0,47,167,0.12)" stroke-width="1"/>
+    <rect x="162" y="34" width="70" height="5" rx="2.5" fill="rgba(0,47,167,0.22)"/>
+    <rect x="162" y="44" width="140" height="1" fill="rgba(0,47,167,0.06)"/>
+    <!-- 风险项列表 -->
+    <rect x="162" y="50" width="10" height="10" rx="3" fill="${color}20"/>
+    <rect x="162" y="50" width="10" height="10" rx="3" stroke="${color}50" stroke-width="0.8" fill="none"/>
+    <circle cx="167" cy="55" r="3" fill="${color}"/>
+    <rect x="177" y="52" width="60" height="3" rx="1.5" fill="rgba(0,47,167,0.18)"/>
+    <rect x="177" y="58" width="100" height="2.5" rx="1.25" fill="rgba(0,47,167,0.08)"/>
+    <rect x="162" y="68" width="10" height="10" rx="3" fill="rgba(217,119,6,0.12)" stroke="rgba(217,119,6,0.4)" stroke-width="0.8"/>
+    <circle cx="167" cy="73" r="3" fill="#D97706"/>
+    <rect x="177" y="70" width="48" height="3" rx="1.5" fill="rgba(0,47,167,0.18)"/>
+    <rect x="177" y="76" width="85" height="2.5" rx="1.25" fill="rgba(0,47,167,0.08)"/>
+    <rect x="162" y="86" width="10" height="10" rx="3" fill="rgba(22,163,74,0.12)" stroke="rgba(22,163,74,0.4)" stroke-width="0.8"/>
+    <circle cx="167" cy="91" r="3" fill="#16A34A"/>
+    <rect x="177" y="88" width="55" height="3" rx="1.5" fill="rgba(0,47,167,0.18)"/>
+    <rect x="177" y="94" width="90" height="2.5" rx="1.25" fill="rgba(0,47,167,0.08)"/>
+    <!-- 合规结论条 -->
+    <rect x="162" y="104" width="140" height="22" rx="6" fill="${color}10" stroke="${color}30" stroke-width="0.8"/>
+    <rect x="168" y="110" width="6" height="6" rx="3" fill="${color}"/>
+    <rect x="180" y="112" width="50" height="2.5" rx="1.25" fill="${color}80"/>
+    <rect x="236" y="108" width="52" height="14" rx="7" fill="${color}" />
+    <text x="262" y="117" font-size="6.5" fill="white" text-anchor="middle" font-family="sans-serif" font-weight="700">生成报告 →</text>
+    <!-- 扫描线动画 -->
+    <rect x="12" y="60" width="62" height="1.2" fill="${color}90" opacity="0">
+      <animate attributeName="y" values="38;115;38" dur="2.6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.6;0" dur="2.6s" repeatCount="indefinite"/>
+    </rect>
+  </svg>`,
+
+  // 1: 智能会议 — 声纹波形+对话气泡+任务提取
+  (color) => `
+  <svg viewBox="0 0 320 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="320" height="160" fill="${LB}"/>
+    <!-- 顶部：声纹波形 -->
+    <rect x="10" y="14" width="300" height="36" rx="8" fill="white" stroke="rgba(0,47,167,0.10)" stroke-width="1"/>
+    <!-- 波形柱 -->
+    <rect x="22" y="24" width="3" height="16" rx="1.5" fill="${color}30"/>
+    <rect x="27" y="20" width="3" height="24" rx="1.5" fill="${color}50"/>
+    <rect x="32" y="22" width="3" height="20" rx="1.5" fill="${color}40"/>
+    <rect x="37" y="18" width="3" height="28" rx="1.5" fill="${color}70"/>
+    <rect x="42" y="24" width="3" height="16" rx="1.5" fill="${color}50"/>
+    <rect x="47" y="16" width="3" height="32" rx="1.5" fill="${color}"/>
+    <rect x="52" y="22" width="3" height="20" rx="1.5" fill="${color}60"/>
+    <rect x="57" y="26" width="3" height="12" rx="1.5" fill="${color}40"/>
+    <rect x="62" y="20" width="3" height="24" rx="1.5" fill="${color}55"/>
+    <rect x="67" y="24" width="3" height="16" rx="1.5" fill="${color}35"/>
+    <!-- 发言人A标签 -->
+    <rect x="75" y="22" width="28" height="10" rx="5" fill="${color}20" stroke="${color}50" stroke-width="0.8"/>
+    <text x="89" y="29" font-size="6" fill="${color}" text-anchor="middle" font-family="sans-serif" font-weight="700">张 总</text>
+    <!-- 波形B -->
+    <rect x="108" y="24" width="3" height="16" rx="1.5" fill="rgba(13,159,106,0.3)"/>
+    <rect x="113" y="19" width="3" height="26" rx="1.5" fill="rgba(13,159,106,0.55)"/>
+    <rect x="118" y="22" width="3" height="20" rx="1.5" fill="rgba(13,159,106,0.45)"/>
+    <rect x="123" y="17" width="3" height="30" rx="1.5" fill="rgba(13,159,106,0.8)"/>
+    <rect x="128" y="21" width="3" height="22" rx="1.5" fill="rgba(13,159,106,0.55)"/>
+    <rect x="133" y="25" width="3" height="14" rx="1.5" fill="rgba(13,159,106,0.35)"/>
+    <!-- 发言人B标签 -->
+    <rect x="141" y="22" width="28" height="10" rx="5" fill="rgba(13,159,106,0.15)" stroke="rgba(13,159,106,0.5)" stroke-width="0.8"/>
+    <text x="155" y="29" font-size="6" fill="#0D9F6A" text-anchor="middle" font-family="sans-serif" font-weight="700">李 总</text>
+    <!-- 进度条 -->
+    <rect x="176" y="26" width="120" height="4" rx="2" fill="rgba(0,47,167,0.08)"/>
+    <rect x="176" y="26" width="72" height="4" rx="2" fill="${color}50"/>
+    <text x="176" y="36" font-size="5.5" fill="rgba(0,47,167,0.4)" font-family="sans-serif">60%</text>
+    <!-- 左下：会议纪要面板 -->
+    <rect x="10" y="58" width="150" height="94" rx="8" fill="white" stroke="rgba(0,47,167,0.10)" stroke-width="1"/>
+    <rect x="18" y="66" width="60" height="4" rx="2" fill="rgba(0,47,167,0.22)"/>
+    <rect x="18" y="75" width="134" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <rect x="18" y="81" width="120" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <rect x="18" y="87" width="128" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <rect x="18" y="93" width="110" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <rect x="18" y="102" width="134" height="2.5" rx="1.25" fill="rgba(0,47,167,0.08)"/>
+    <rect x="18" y="108" width="118" height="2.5" rx="1.25" fill="rgba(0,47,167,0.08)"/>
+    <rect x="18" y="114" width="125" height="2.5" rx="1.25" fill="rgba(0,47,167,0.08)"/>
+    <!-- 关键词高亮 -->
+    <rect x="18" y="122" width="38" height="8" rx="4" fill="${color}15" stroke="${color}40" stroke-width="0.8"/>
+    <rect x="60" y="122" width="30" height="8" rx="4" fill="${color}15" stroke="${color}40" stroke-width="0.8"/>
+    <rect x="94" y="122" width="42" height="8" rx="4" fill="${color}15" stroke="${color}40" stroke-width="0.8"/>
+    <rect x="18" y="134" width="55" height="8" rx="4" fill="${color}15" stroke="${color}40" stroke-width="0.8"/>
+    <rect x="78" y="134" width="36" height="8" rx="4" fill="${color}15" stroke="${color}40" stroke-width="0.8"/>
+    <!-- 右下：任务提取面板 -->
+    <rect x="168" y="58" width="142" height="94" rx="8" fill="white" stroke="rgba(0,47,167,0.10)" stroke-width="1"/>
+    <rect x="176" y="66" width="55" height="4" rx="2" fill="rgba(0,47,167,0.22)"/>
+    <!-- 任务项 -->
+    <rect x="176" y="77" width="10" height="10" rx="2.5" fill="${color}20" stroke="${color}50" stroke-width="0.8"/>
+    <path d="M178 82l2 2 4-4" stroke="${color}" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="190" y="79" width="60" height="3" rx="1.5" fill="rgba(0,47,167,0.18)"/>
+    <rect x="190" y="84.5" width="100" height="2" rx="1" fill="rgba(0,47,167,0.08)"/>
+    <rect x="176" y="93" width="10" height="10" rx="2.5" fill="${color}20" stroke="${color}50" stroke-width="0.8"/>
+    <path d="M178 98l2 2 4-4" stroke="${color}" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="190" y="95" width="75" height="3" rx="1.5" fill="rgba(0,47,167,0.18)"/>
+    <rect x="190" y="100.5" width="88" height="2" rx="1" fill="rgba(0,47,167,0.08)"/>
+    <rect x="176" y="109" width="10" height="10" rx="2.5" fill="rgba(217,119,6,0.12)" stroke="rgba(217,119,6,0.4)" stroke-width="0.8"/>
+    <rect x="190" y="111" width="50" height="3" rx="1.5" fill="rgba(0,47,167,0.18)"/>
+    <rect x="190" y="116.5" width="95" height="2" rx="1" fill="rgba(0,47,167,0.08)"/>
+    <rect x="176" y="125" width="10" height="10" rx="2.5" fill="rgba(217,119,6,0.12)" stroke="rgba(217,119,6,0.4)" stroke-width="0.8"/>
+    <rect x="190" y="127" width="68" height="3" rx="1.5" fill="rgba(0,47,167,0.18)"/>
+    <rect x="190" y="132.5" width="80" height="2" rx="1" fill="rgba(0,47,167,0.08)"/>
+    <!-- 归档角标 -->
+    <rect x="248" y="64" width="54" height="14" rx="7" fill="${color}15" stroke="${color}30" stroke-width="0.8"/>
+    <text x="275" y="73" font-size="6" fill="${color}" text-anchor="middle" font-family="sans-serif" font-weight="700">知识库收录 ✓</text>
+    <!-- 动态点 -->
+    <circle cx="280" cy="25" r="3.5" fill="${color}">
+      <animate attributeName="opacity" values="1;0.3;1" dur="1.4s" repeatCount="indefinite"/>
+    </circle>
+    <rect x="287" y="23" width="20" height="4" rx="2" fill="rgba(0,47,167,0.08)"/>
+  </svg>`,
+
+  // 2: 律师小助手 — 案件卷宗+类案匹配+文书生成
+  (color) => `
+  <svg viewBox="0 0 320 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="320" height="160" fill="${LB}"/>
+    <!-- 左：案件卷宗 -->
+    <rect x="8" y="18" width="88" height="124" rx="7" fill="white" stroke="rgba(0,47,167,0.12)" stroke-width="1"/>
+    <!-- 案件编号 -->
+    <rect x="14" y="26" width="48" height="5" rx="2.5" fill="${color}" opacity="0.75"/>
+    <rect x="14" y="35" width="70" height="2.5" rx="1.25" fill="rgba(0,47,167,0.12)"/>
+    <rect x="14" y="41" width="64" height="2.5" rx="1.25" fill="rgba(0,47,167,0.12)"/>
+    <!-- 案情标签 -->
+    <rect x="14" y="49" width="26" height="8" rx="4" fill="${color}15" stroke="${color}40" stroke-width="0.8"/>
+    <rect x="44" y="49" width="22" height="8" rx="4" fill="${color}15" stroke="${color}40" stroke-width="0.8"/>
+    <!-- 证据列表 -->
+    <rect x="14" y="62" width="72" height="1" fill="rgba(0,47,167,0.06)"/>
+    <rect x="14" y="67" width="8" height="8" rx="2" fill="${color}15"/>
+    <rect x="25" y="69" width="50" height="2.5" rx="1.25" fill="rgba(0,47,167,0.14)"/>
+    <rect x="14" y="79" width="8" height="8" rx="2" fill="${color}15"/>
+    <rect x="25" y="81" width="44" height="2.5" rx="1.25" fill="rgba(0,47,167,0.14)"/>
+    <rect x="14" y="91" width="8" height="8" rx="2" fill="${color}15"/>
+    <rect x="25" y="93" width="56" height="2.5" rx="1.25" fill="rgba(0,47,167,0.14)"/>
+    <rect x="14" y="103" width="8" height="8" rx="2" fill="${color}15"/>
+    <rect x="25" y="105" width="40" height="2.5" rx="1.25" fill="rgba(0,47,167,0.14)"/>
+    <!-- 风险评估 -->
+    <rect x="14" y="116" width="72" height="18" rx="5" fill="${color}08" stroke="${color}25" stroke-width="0.8"/>
+    <rect x="20" y="122" width="30" height="2.5" rx="1.25" fill="${color}60"/>
+    <rect x="20" y="127" width="52" height="2" rx="1" fill="rgba(0,47,167,0.12)"/>
+    <!-- 中：AI 类案匹配 -->
+    <rect x="106" y="30" width="62" height="100" rx="10" fill="${color}12" stroke="${color}40" stroke-width="1.2"/>
+    <text x="137" y="62" font-size="8" fill="${color}" text-anchor="middle" font-family="sans-serif" font-weight="800">AI</text>
+    <text x="137" y="73" font-size="5.5" fill="${color}80" text-anchor="middle" font-family="sans-serif">类案识别</text>
+    <!-- 相似度环 -->
+    <circle cx="137" cy="95" r="16" fill="none" stroke="${color}20" stroke-width="4"/>
+    <circle cx="137" cy="95" r="16" fill="none" stroke="${color}" stroke-width="4" stroke-dasharray="72 29" stroke-dashoffset="25" stroke-linecap="round"/>
+    <text x="137" y="99" font-size="7" fill="${color}" text-anchor="middle" font-family="sans-serif" font-weight="700">71%</text>
+    <!-- 连接线 -->
+    <path d="M96 80 L106 80" stroke="${color}40" stroke-width="1.2" stroke-dasharray="3 2"/>
+    <path d="M168 80 L178 80" stroke="${color}40" stroke-width="1.2" stroke-dasharray="3 2"/>
+    <!-- 右：文书生成 -->
+    <rect x="180" y="18" width="132" height="124" rx="7" fill="white" stroke="rgba(0,47,167,0.12)" stroke-width="1"/>
+    <rect x="188" y="26" width="60" height="5" rx="2.5" fill="rgba(0,47,167,0.22)"/>
+    <!-- 综述报告内容 -->
+    <rect x="188" y="37" width="116" height="2.5" rx="1.25" fill="rgba(0,47,167,0.12)"/>
+    <rect x="188" y="43" width="108" height="2.5" rx="1.25" fill="rgba(0,47,167,0.12)"/>
+    <rect x="188" y="49" width="112" height="2.5" rx="1.25" fill="rgba(0,47,167,0.12)"/>
+    <rect x="188" y="57" width="116" height="1" fill="rgba(0,47,167,0.06)"/>
+    <rect x="188" y="62" width="44" height="3.5" rx="1.75" fill="${color}70" opacity="0.7"/>
+    <rect x="188" y="70" width="116" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <rect x="188" y="76" width="100" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <rect x="188" y="82" width="110" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <rect x="188" y="90" width="116" height="1" fill="rgba(0,47,167,0.06)"/>
+    <rect x="188" y="95" width="50" height="3.5" rx="1.75" fill="${color}70" opacity="0.7"/>
+    <rect x="188" y="103" width="116" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <rect x="188" y="109" width="92" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <!-- 光标闪烁 -->
+    <rect x="188" y="115" width="2" height="10" rx="1" fill="${color}">
+      <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
+    </rect>
+    <!-- 导出按钮 -->
+    <rect x="188" y="128" width="116" height="8" rx="4" fill="${color}" opacity="0.9"/>
+    <text x="246" y="134" font-size="6" fill="white" text-anchor="middle" font-family="sans-serif" font-weight="700">导出案件综述报告</text>
+  </svg>`,
+
+  // 3: 产业链分析 — 多源采集+AI整合+图谱报告
+  (color) => `
+  <svg viewBox="0 0 320 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="320" height="160" fill="${LB}"/>
+    <!-- 左：多信息源 -->
+    <rect x="6" y="14" width="68" height="18" rx="5" fill="white" stroke="rgba(0,47,167,0.12)" stroke-width="1"/>
+    <rect x="12" y="19" width="8" height="8" rx="2" fill="${color}25"/>
+    <rect x="24" y="20.5" width="38" height="3" rx="1.5" fill="rgba(0,47,167,0.20)"/>
+    <rect x="24" y="25.5" width="28" height="2" rx="1" fill="rgba(0,47,167,0.10)"/>
+
+    <rect x="6" y="38" width="68" height="18" rx="5" fill="white" stroke="rgba(0,47,167,0.12)" stroke-width="1"/>
+    <rect x="12" y="43" width="8" height="8" rx="2" fill="rgba(217,119,6,0.2)"/>
+    <rect x="24" y="44.5" width="34" height="3" rx="1.5" fill="rgba(0,47,167,0.20)"/>
+    <rect x="24" y="49.5" width="24" height="2" rx="1" fill="rgba(0,47,167,0.10)"/>
+
+    <rect x="6" y="62" width="68" height="18" rx="5" fill="white" stroke="rgba(0,47,167,0.12)" stroke-width="1"/>
+    <rect x="12" y="67" width="8" height="8" rx="2" fill="rgba(22,163,74,0.2)"/>
+    <rect x="24" y="68.5" width="40" height="3" rx="1.5" fill="rgba(0,47,167,0.20)"/>
+    <rect x="24" y="73.5" width="30" height="2" rx="1" fill="rgba(0,47,167,0.10)"/>
+
+    <rect x="6" y="86" width="68" height="18" rx="5" fill="white" stroke="rgba(0,47,167,0.12)" stroke-width="1"/>
+    <rect x="12" y="91" width="8" height="8" rx="2" fill="rgba(139,92,246,0.2)"/>
+    <rect x="24" y="92.5" width="36" height="3" rx="1.5" fill="rgba(0,47,167,0.20)"/>
+    <rect x="24" y="97.5" width="26" height="2" rx="1" fill="rgba(0,47,167,0.10)"/>
+
+    <rect x="6" y="110" width="68" height="18" rx="5" fill="white" stroke="rgba(0,47,167,0.12)" stroke-width="1"/>
+    <rect x="12" y="115" width="8" height="8" rx="2" fill="rgba(236,72,153,0.2)"/>
+    <rect x="24" y="116.5" width="42" height="3" rx="1.5" fill="rgba(0,47,167,0.20)"/>
+    <rect x="24" y="121.5" width="32" height="2" rx="1" fill="rgba(0,47,167,0.10)"/>
+
+    <!-- 并发流线 -->
+    <path d="M74 23 Q90 23 90 80" stroke="${color}30" stroke-width="1" stroke-dasharray="3 2" fill="none"/>
+    <path d="M74 47 Q90 47 90 80" stroke="${color}30" stroke-width="1" stroke-dasharray="3 2" fill="none"/>
+    <path d="M74 71 L90 80" stroke="${color}30" stroke-width="1" stroke-dasharray="3 2"/>
+    <path d="M74 95 Q90 95 90 80" stroke="${color}30" stroke-width="1" stroke-dasharray="3 2" fill="none"/>
+    <path d="M74 119 Q90 119 90 80" stroke="${color}30" stroke-width="1" stroke-dasharray="3 2" fill="none"/>
+
+    <!-- 中：AI整合引擎 -->
+    <rect x="88" y="60" width="52" height="40" rx="10" fill="${color}18" stroke="${color}45" stroke-width="1.2"/>
+    <text x="114" y="78" font-size="8.5" fill="${color}" text-anchor="middle" font-family="sans-serif" font-weight="800">AI</text>
+    <text x="114" y="88" font-size="5.5" fill="${color}80" text-anchor="middle" font-family="sans-serif">整合分析</text>
+    <circle cx="114" cy="80" r="28" stroke="${color}" stroke-width="0.7" opacity="0.12">
+      <animate attributeName="r" values="24;34;24" dur="2.8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.18;0;0.18" dur="2.8s" repeatCount="indefinite"/>
+    </circle>
+    <path d="M140 80 L152 80" stroke="${color}50" stroke-width="1.5"/>
+    <path d="M148 76.5l4 3.5-4 3.5" stroke="${color}70" stroke-width="1.3" stroke-linecap="round"/>
+
+    <!-- 右：产业链报告 -->
+    <rect x="154" y="12" width="158" height="136" rx="8" fill="white" stroke="rgba(0,47,167,0.12)" stroke-width="1"/>
+    <rect x="162" y="20" width="72" height="5" rx="2.5" fill="rgba(0,47,167,0.22)"/>
+    <!-- 图谱可视化区 -->
+    <rect x="162" y="30" width="142" height="52" rx="6" fill="${color}06" stroke="${color}15" stroke-width="0.8"/>
+    <!-- 节点图谱 -->
+    <circle cx="233" cy="56" r="9" fill="${color}25" stroke="${color}60" stroke-width="1"/>
+    <text x="233" y="59" font-size="5.5" fill="${color}" text-anchor="middle" font-family="sans-serif" font-weight="700">核心</text>
+    <circle cx="196" cy="42" r="6" fill="${color}18" stroke="${color}40" stroke-width="0.8"/>
+    <circle cx="270" cy="42" r="6" fill="${color}18" stroke="${color}40" stroke-width="0.8"/>
+    <circle cx="196" cy="70" r="6" fill="${color}18" stroke="${color}40" stroke-width="0.8"/>
+    <circle cx="270" cy="70" r="6" fill="${color}18" stroke="${color}40" stroke-width="0.8"/>
+    <circle cx="175" cy="56" r="5" fill="rgba(217,119,6,0.15)" stroke="rgba(217,119,6,0.4)" stroke-width="0.8"/>
+    <circle cx="291" cy="56" r="5" fill="rgba(22,163,74,0.15)" stroke="rgba(22,163,74,0.4)" stroke-width="0.8"/>
+    <line x1="224" y1="51" x2="201" y2="45" stroke="${color}30" stroke-width="1"/>
+    <line x1="242" y1="51" x2="265" y2="45" stroke="${color}30" stroke-width="1"/>
+    <line x1="224" y1="61" x2="201" y2="67" stroke="${color}30" stroke-width="1"/>
+    <line x1="242" y1="61" x2="265" y2="67" stroke="${color}30" stroke-width="1"/>
+    <line x1="224" y1="56" x2="180" y2="56" stroke="${color}20" stroke-width="0.8"/>
+    <line x1="242" y1="56" x2="286" y2="56" stroke="${color}20" stroke-width="0.8"/>
+    <!-- 报告结构 -->
+    <rect x="162" y="88" width="50" height="3.5" rx="1.75" fill="${color}60" opacity="0.8"/>
+    <rect x="162" y="96" width="142" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <rect x="162" y="102" width="130" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <rect x="162" y="110" width="48" height="3.5" rx="1.75" fill="${color}60" opacity="0.8"/>
+    <rect x="162" y="118" width="142" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <rect x="162" y="124" width="118" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <rect x="162" y="132" width="142" height="10" rx="5" fill="${color}" opacity="0.9"/>
+    <text x="233" y="139" font-size="6" fill="white" text-anchor="middle" font-family="sans-serif" font-weight="700">导出产业链分析报告</text>
+  </svg>`,
+
+  // 4: 招投标 — 文件解析+资质比对+差异报告
+  (color) => `
+  <svg viewBox="0 0 320 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="320" height="160" fill="${LB}"/>
+    <!-- 左：招标文件A -->
+    <rect x="8" y="16" width="76" height="128" rx="6" fill="white" stroke="rgba(0,47,167,0.14)" stroke-width="1"/>
+    <rect x="14" y="24" width="20" height="20" rx="4" fill="${color}15"/>
+    <path d="M20 34l4 4 8-8" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="38" y="27" width="38" height="4" rx="2" fill="rgba(0,47,167,0.22)"/>
+    <rect x="38" y="34" width="30" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <rect x="14" y="50" width="64" height="1" fill="rgba(0,47,167,0.06)"/>
+    <!-- 关键项 -->
+    <rect x="14" y="55" width="6" height="6" rx="1.5" fill="${color}30"/>
+    <rect x="23" y="56.5" width="44" height="2.5" rx="1.25" fill="rgba(0,47,167,0.16)"/>
+    <rect x="14" y="65" width="6" height="6" rx="1.5" fill="${color}30"/>
+    <rect x="23" y="66.5" width="38" height="2.5" rx="1.25" fill="rgba(0,47,167,0.16)"/>
+    <rect x="14" y="75" width="6" height="6" rx="1.5" fill="${color}30"/>
+    <rect x="23" y="76.5" width="50" height="2.5" rx="1.25" fill="rgba(0,47,167,0.16)"/>
+    <rect x="14" y="85" width="6" height="6" rx="1.5" fill="rgba(22,163,74,0.25)"/>
+    <rect x="23" y="86.5" width="42" height="2.5" rx="1.25" fill="rgba(0,47,167,0.16)"/>
+    <rect x="14" y="95" width="6" height="6" rx="1.5" fill="rgba(217,119,6,0.25)"/>
+    <rect x="23" y="96.5" width="46" height="2.5" rx="1.25" fill="rgba(0,47,167,0.16)"/>
+    <rect x="14" y="107" width="64" height="1" fill="rgba(0,47,167,0.06)"/>
+    <rect x="14" y="112" width="64" height="22" rx="5" fill="${color}08" stroke="${color}20" stroke-width="0.8"/>
+    <rect x="20" y="118" width="35" height="2.5" rx="1.25" fill="${color}60"/>
+    <rect x="20" y="124" width="50" height="2" rx="1" fill="rgba(0,47,167,0.10)"/>
+    <!-- 文件B -->
+    <rect x="92" y="16" width="76" height="128" rx="6" fill="white" stroke="rgba(0,47,167,0.14)" stroke-width="1"/>
+    <rect x="98" y="24" width="20" height="20" rx="4" fill="${color}15"/>
+    <path d="M104 34l4 4 8-8" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="122" y="27" width="38" height="4" rx="2" fill="rgba(0,47,167,0.22)"/>
+    <rect x="122" y="34" width="30" height="2.5" rx="1.25" fill="rgba(0,47,167,0.10)"/>
+    <rect x="98" y="50" width="64" height="1" fill="rgba(0,47,167,0.06)"/>
+    <rect x="98" y="55" width="6" height="6" rx="1.5" fill="${color}30"/>
+    <rect x="107" y="56.5" width="44" height="2.5" rx="1.25" fill="rgba(0,47,167,0.16)"/>
+    <rect x="98" y="65" width="6" height="6" rx="1.5" fill="${color}30"/>
+    <rect x="107" y="66.5" width="38" height="2.5" rx="1.25" fill="rgba(0,47,167,0.16)"/>
+    <!-- 差异项高亮 -->
+    <rect x="98" y="73" width="64" height="10" rx="3" fill="rgba(217,119,6,0.10)"/>
+    <rect x="98" y="75" width="6" height="6" rx="1.5" fill="rgba(217,119,6,0.35)"/>
+    <rect x="107" y="76.5" width="50" height="2.5" rx="1.25" fill="rgba(217,119,6,0.45)"/>
+    <rect x="98" y="87" width="6" height="6" rx="1.5" fill="rgba(22,163,74,0.25)"/>
+    <rect x="107" y="88.5" width="42" height="2.5" rx="1.25" fill="rgba(0,47,167,0.16)"/>
+    <rect x="98" y="95" width="64" height="10" rx="3" fill="${color}08"/>
+    <rect x="98" y="97" width="6" height="6" rx="1.5" fill="${color}30"/>
+    <rect x="107" y="98.5" width="46" height="2.5" rx="1.25" fill="${color}50"/>
+    <rect x="98" y="107" width="64" height="1" fill="rgba(0,47,167,0.06)"/>
+    <rect x="98" y="112" width="64" height="22" rx="5" fill="${color}08" stroke="${color}20" stroke-width="0.8"/>
+    <rect x="104" y="118" width="35" height="2.5" rx="1.25" fill="${color}60"/>
+    <rect x="104" y="124" width="50" height="2" rx="1" fill="rgba(0,47,167,0.10)"/>
+    <!-- 中间对比箭头 -->
+    <path d="M86 80 L92 80" stroke="${color}40" stroke-width="1.5"/>
+    <!-- AI比对引擎 -->
+    <rect x="178" y="52" width="52" height="56" rx="10" fill="${color}15" stroke="${color}40" stroke-width="1.2"/>
+    <text x="204" y="76" font-size="8" fill="${color}" text-anchor="middle" font-family="sans-serif" font-weight="800">AI</text>
+    <text x="204" y="87" font-size="5.5" fill="${color}80" text-anchor="middle" font-family="sans-serif">差异比对</text>
+    <text x="204" y="97" font-size="5.5" fill="${color}80" text-anchor="middle" font-family="sans-serif">智能分析</text>
+    <path d="M168 80 L178 80" stroke="${color}40" stroke-width="1.3" stroke-dasharray="3 2"/>
+    <path d="M230 80 L240 80" stroke="${color}40" stroke-width="1.3" stroke-dasharray="3 2"/>
+    <!-- 右：差异报告 -->
+    <rect x="242" y="16" width="72" height="128" rx="6" fill="white" stroke="rgba(0,47,167,0.14)" stroke-width="1"/>
+    <rect x="248" y="24" width="58" height="4" rx="2" fill="rgba(0,47,167,0.22)"/>
+    <!-- 一致项 -->
+    <rect x="248" y="34" width="58" height="8" rx="3" fill="rgba(22,163,74,0.08)"/>
+    <circle cx="254" cy="38" r="3" fill="#16A34A" opacity="0.8"/>
+    <rect x="261" y="36.5" width="36" height="2.5" rx="1.25" fill="rgba(0,47,167,0.15)"/>
+    <rect x="248" y="46" width="58" height="8" rx="3" fill="rgba(22,163,74,0.08)"/>
+    <circle cx="254" cy="50" r="3" fill="#16A34A" opacity="0.8"/>
+    <rect x="261" y="48.5" width="30" height="2.5" rx="1.25" fill="rgba(0,47,167,0.15)"/>
+    <!-- 差异项 -->
+    <rect x="248" y="58" width="58" height="8" rx="3" fill="rgba(217,119,6,0.10)"/>
+    <circle cx="254" cy="62" r="3" fill="#D97706"/>
+    <rect x="261" y="60.5" width="40" height="2.5" rx="1.25" fill="rgba(217,119,6,0.55)"/>
+    <rect x="248" y="70" width="58" height="8" rx="3" fill="${color}08"/>
+    <circle cx="254" cy="74" r="3" fill="${color}"/>
+    <rect x="261" y="72.5" width="34" height="2.5" rx="1.25" fill="${color}50"/>
+    <rect x="248" y="82" width="58" height="8" rx="3" fill="rgba(217,119,6,0.10)"/>
+    <circle cx="254" cy="86" r="3" fill="#D97706"/>
+    <rect x="261" y="84.5" width="38" height="2.5" rx="1.25" fill="rgba(217,119,6,0.55)"/>
+    <!-- 统计摘要 -->
+    <rect x="248" y="96" width="58" height="1" fill="rgba(0,47,167,0.06)"/>
+    <rect x="248" y="102" width="58" height="30" rx="5" fill="${color}08" stroke="${color}20" stroke-width="0.8"/>
+    <rect x="253" y="108" width="30" height="2.5" rx="1.25" fill="rgba(0,47,167,0.20)"/>
+    <rect x="253" y="114" width="48" height="2.5" rx="1.25" fill="rgba(0,47,167,0.12)"/>
+    <rect x="253" y="120" width="40" height="2.5" rx="1.25" fill="rgba(0,47,167,0.12)"/>
+    <!-- 导出 -->
+    <rect x="248" y="136" width="58" height="8" rx="4" fill="${color}" opacity="0.9"/>
+    <text x="277" y="141.5" font-size="5.5" fill="white" text-anchor="middle" font-family="sans-serif" font-weight="700">导出差异报告</text>
+  </svg>`,
+];
+
+// ── SCENE DATA ────────────────────────────────────────────────
+const SCENES = [
+  {
+    tag: '法务 · 合规',
+    color: '#1A56DB', colorDark: '#002FA7',
+    bgAlpha: 'rgba(26,86,219,0.08)', orbColor: 'rgba(0,47,167,0.06)',
+    name: '智能合同\n审核',
+    desc: '基于标签知识库、AI大模型与法律法规库，对销售合同、采购合同、合作协议等大文档进行自动化审核，智能识别风险条款与合规问题。',
+    values: ['降低法律风险', '缩短审核周期', '标准化审核流程', '多类合同全覆盖'],
+    features: [
+      { icon: featureIcon(0), title: '多类合同智能解析', desc: '支持销售合同、采购合同、合作协议等多类文档，自动拆解条款结构，建立语义理解层' },
+      { icon: featureIcon(1), title: '标签知识库驱动', desc: '基于企业专属标签知识库，动态匹配合同类型与审核规则，支持自定义约束条件配置' },
+      { icon: featureIcon(2), title: '法规合规验证', desc: '内置法律法规知识库，自动核验合同条款的合规性，标注偏差并给出修改建议' },
+      { icon: featureIcon(3), title: '结构化审核报告', desc: '将风险条款、合规问题与修改建议整合为结构化报告，支持 Word/PDF 导出并触发审批流' },
+    ],
+    steps: [
+      { title: '上传合同文件', desc: '支持 Word、PDF、扫描件（OCR），批量上传或 API 对接 OA 系统' },
+      { title: '知识库匹配', desc: '自动关联标签知识库与约束条件，确定审核规则与风险检测维度' },
+      { title: '多维并行分析', desc: '同步运行风险识别、法规合规验证、模板比对三条检测链路' },
+      { title: '生成审核报告', desc: '输出风险清单与修改建议，对接审批流系统，实现闭环管理' },
+    ],
+    workflow: [
+      { col: [
+        { type:'start', icon:'▶', typeLabel:'Start', title:'合同上传', desc:'文件输入节点\nWord / PDF / 扫描件' },
+      ]},
+      { col: [
+        { type:'tool', icon:'⚙', typeLabel:'Tool', title:'OCR 识别', desc:'扫描件转文本\n格式标准化' },
+      ]},
+      { col: [
+        { type:'kb', icon:'📚', typeLabel:'知识库', title:'标签知识库', desc:'命中合同类型\n加载审核规则' },
+      ]},
+      { col: [
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'条款解析', desc:'拆解条款结构\n语义理解' },
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'法规验证', desc:'比对法律法规库\n合规性校验' },
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'模板比对', desc:'与标准合同\n差异对比' },
+      ]},
+      { col: [
+        { type:'if', icon:'⟐', typeLabel:'IF/ELSE', title:'风险判断', desc:'高 / 中 / 低\n风险分级' },
+      ]},
+      { col: [
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'修改建议', desc:'生成条款修改\n建议与说明' },
+      ]},
+      { col: [
+        { type:'code', icon:'</>', typeLabel:'Code', title:'报告生成', desc:'结构化输出\nWord / PDF' },
+      ]},
+      { col: [
+        { type:'end', icon:'■', typeLabel:'End', title:'审批流推送', desc:'对接 OA 系统\n触发审批节点' },
+      ]},
+    ],
+  },
+  {
+    tag: '协作 · 效率',
+    color: '#0891B2', colorDark: '#0E7490',
+    bgAlpha: 'rgba(8,145,178,0.08)', orbColor: 'rgba(8,145,178,0.06)',
+    name: '智能会议\n助手',
+    desc: '支持发言人声纹识别与拆分，自动生成会议纪要、提炼关键结论、拆解任务清单，并将会议知识沉淀至知识库，大幅降低会议管理成本。',
+    values: ['自动生成纪要', '声纹识别分轨', '任务自动拆解', '知识沉淀归档'],
+    features: [
+      { icon: featureIcon(4), title: '声纹识别与拆分', desc: '通过声纹特征自动识别多位发言人，按人员维度拆分会议内容，还原完整对话上下文' },
+      { icon: featureIcon(5), title: '会议纪要生成', desc: '基于大模型自动提炼会议要点、关键决策与结论，输出结构化会议纪要，格式可定制' },
+      { icon: featureIcon(6), title: '任务智能分析', desc: '自动识别会议中的行动项与责任人，生成任务清单并推送至项目管理系统或飞书' },
+      { icon: featureIcon(7), title: '知识库自动收录', desc: '将会议结论与关键信息自动入库，支持后续检索与关联，形成企业知识积累闭环' },
+    ],
+    steps: [
+      { title: '音频/视频接入', desc: '支持实时会议流接入或会后录音上传，兼容主流会议平台' },
+      { title: '声纹识别拆分', desc: '自动注册声纹特征，识别并区分各发言人，分轨转写内容' },
+      { title: 'AI 内容提炼', desc: '关键点提取、总结生成、任务拆解同步并行，输出结构化结果' },
+      { title: '分发与归档', desc: '纪要自动推送至成员，任务同步项目系统，知识沉淀至知识库' },
+    ],
+    workflow: [
+      { col: [
+        { type:'start', icon:'▶', typeLabel:'Start', title:'录音/实时流', desc:'音视频输入\n多平台接入' },
+      ]},
+      { col: [
+        { type:'tool', icon:'⚙', typeLabel:'Tool', title:'声纹识别', desc:'发言人注册\n分轨转写' },
+      ]},
+      { col: [
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'会议纪要', desc:'要点提炼\n结构化输出' },
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'任务拆解', desc:'行动项识别\n责任人归属' },
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'关键点提取', desc:'结论摘要\n决策提炼' },
+      ]},
+      { col: [
+        { type:'if', icon:'⟐', typeLabel:'IF/ELSE', title:'内容分类', desc:'纪要 / 任务\n知识 分流' },
+      ]},
+      { col: [
+        { type:'http', icon:'⇌', typeLabel:'HTTP', title:'推送任务', desc:'飞书/企微\n项目系统' },
+        { type:'kb', icon:'📚', typeLabel:'知识库', title:'知识入库', desc:'会议知识\n自动归档' },
+      ]},
+      { col: [
+        { type:'end', icon:'■', typeLabel:'End', title:'分发完成', desc:'纪要已推送\n任务已同步' },
+      ]},
+    ],
+  },
+  {
+    tag: '法律 · 司法',
+    color: '#7C3AED', colorDark: '#5B21B6',
+    bgAlpha: 'rgba(124,58,237,0.08)', orbColor: 'rgba(124,58,237,0.06)',
+    name: '律师\n小助手',
+    desc: '覆盖案情分析、类案识别到文书起草全流程，帮助律师团队快速梳理案件脉络、检索相似判例，并自动生成案件综述报告与法律文书草稿。',
+    values: ['案情快速梳理', '类案精准识别', '文书自动起草', '综述报告生成'],
+    features: [
+      { icon: featureIcon(8), title: '案情案件分析', desc: '自动解析案件材料，梳理事实脉络、当事人关系与证据链，生成可视化案情摘要' },
+      { icon: featureIcon(9), title: '类案识别检索', desc: '基于语义相似度检索历史判例库，识别类案并标注判决结果，辅助律师评估案件走向' },
+      { icon: featureIcon(10), title: '案件综述报告', desc: '整合案情分析与类案参考，自动生成结构化案件综述报告，支持一键导出 Word/PDF' },
+      { icon: featureIcon(11), title: '法律文书起草', desc: '根据案情要素自动起草诉状、答辩状、法律意见书等文书，律师复核后即可提交使用' },
+    ],
+    steps: [
+      { title: '案件材料上传', desc: '上传案件卷宗、证据材料、庭审记录，支持多格式批量导入' },
+      { title: '案情结构化解析', desc: 'AI 提取当事人、事实、证据、法律关系，建立案件知识图谱' },
+      { title: '类案检索与匹配', desc: '语义检索判例库，输出相似度排名与判决参考，辅助案件研判' },
+      { title: '报告与文书生成', desc: '自动生成综述报告及文书草稿，律师审核确认后导出交付' },
+    ],
+    workflow: [
+      { col: [
+        { type:'start', icon:'▶', typeLabel:'Start', title:'案件材料', desc:'卷宗/证据\n庭审记录' },
+      ]},
+      { col: [
+        { type:'tool', icon:'⚙', typeLabel:'Tool', title:'OCR 解析', desc:'扫描件识别\n多格式支持' },
+      ]},
+      { col: [
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'案情解析', desc:'事实梳理\n证据链提取' },
+      ]},
+      { col: [
+        { type:'kb', icon:'📚', typeLabel:'知识库', title:'类案检索', desc:'判例库语义\n相似度匹配' },
+        { type:'kb', icon:'📚', typeLabel:'知识库', title:'法规检索', desc:'相关法条\n自动关联' },
+      ]},
+      { col: [
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'综述报告', desc:'案情分析\n类案参考整合' },
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'文书起草', desc:'诉状/意见书\n自动生成' },
+      ]},
+      { col: [
+        { type:'if', icon:'⟐', typeLabel:'IF/ELSE', title:'律师审核', desc:'通过/修改\n人工确认' },
+      ]},
+      { col: [
+        { type:'end', icon:'■', typeLabel:'End', title:'导出交付', desc:'Word/PDF\n一键导出' },
+      ]},
+    ],
+  },
+  {
+    tag: '产业 · 研究',
+    color: '#D97706', colorDark: '#B45309',
+    bgAlpha: 'rgba(217,119,6,0.08)', orbColor: 'rgba(217,119,6,0.06)',
+    name: '产业链\n分析助手',
+    desc: '基于AI大模型与产业分析框架，多路并发采集政策原文、行业标准、峰会观点、企业动态等多类信息源，整合形成结构化产业链分析报告。',
+    values: ['多源并发采集', '自动证据整合', '图谱可视化', '结构化报告输出'],
+    features: [
+      { icon: featureIcon(12), title: '多源信息并发采集', desc: '并发采集政策法规、行业标准、峰会观点、企业动态等多类信息源，任务自动解析分发' },
+      { icon: featureIcon(13), title: '产业图谱构建', desc: '自动识别产业链上下游关系与竞争格局，生成可视化产业链全景图谱' },
+      { icon: featureIcon(14), title: '宏观政策解读', desc: '深度解析相关政策原文与监管动向，结合行业数据输出宏观环境与政策影响分析' },
+      { icon: featureIcon(15), title: '结构化分析报告', desc: '按产业链报告标准框架自动生成报告，涵盖研究方法、竞争格局、趋势预测等章节' },
+    ],
+    steps: [
+      { title: '定义分析任务', desc: '输入目标产业与研究维度，AI 自动解析任务并规划采集策略' },
+      { title: '多路并发采集', desc: '政策、标准、峰会、企业动态等多类信息源并发采集，自动去重去噪' },
+      { title: '整合与分析', desc: '证据汇聚、交叉验证，构建产业图谱与竞争分析模型' },
+      { title: '报告生成', desc: '按标准框架生成结构化分析报告，支持自定义章节与导出格式' },
+    ],
+    workflow: [
+      { col: [
+        { type:'start', icon:'▶', typeLabel:'Start', title:'任务输入', desc:'目标产业\n研究维度定义' },
+      ]},
+      { col: [
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'任务解析', desc:'拆解子任务\n规划采集策略' },
+      ]},
+      { col: [
+        { type:'http', icon:'⇌', typeLabel:'HTTP', title:'政策采集', desc:'政府政策\n法规原文' },
+        { type:'http', icon:'⇌', typeLabel:'HTTP', title:'行业采集', desc:'峰会观点\n行业标准' },
+        { type:'http', icon:'⇌', typeLabel:'HTTP', title:'企业采集', desc:'企业动态\n财报数据' },
+      ]},
+      { col: [
+        { type:'code', icon:'</>', typeLabel:'Code', title:'去重聚合', desc:'数据清洗\n证据汇聚' },
+      ]},
+      { col: [
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'产业图谱', desc:'上下游关系\n竞争格局分析' },
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'政策解读', desc:'宏观环境\n政策影响分析' },
+      ]},
+      { col: [
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'报告撰写', desc:'结构化框架\n趋势预测整合' },
+      ]},
+      { col: [
+        { type:'end', icon:'■', typeLabel:'End', title:'报告输出', desc:'PDF导出\n可视化图谱' },
+      ]},
+    ],
+  },
+  {
+    tag: '招投标',
+    color: '#0D9F6A', colorDark: '#065F46',
+    bgAlpha: 'rgba(13,159,106,0.08)', orbColor: 'rgba(13,159,106,0.06)',
+    name: '招投标\n场景集合',
+    desc: '支持招标文件解析与多文件比对：自动识别评分标准、资质要求、技术条款等关键信息，比对投标资料完整度，生成差异性分析报告。',
+    values: ['关键信息自动识别', '资料完整度评估', '多文件差异比对', '合规风险预警'],
+    features: [
+      { icon: featureIcon(16), title: '招标文件深度解析', desc: '自动识别评分标准、资质要求、技术要求、商务条款等关键信息，生成招标文件分析报告' },
+      { icon: featureIcon(17), title: '投标资料比对', desc: '基于投标资料文件库，自动与招标要求逐项比对，输出资料完整度报告与缺失提示' },
+      { icon: featureIcon(18), title: '多文件差异比对', desc: '支持多份招标文件横向对比，基于关键点比对结果，自动生成差异性分析报告' },
+      { icon: featureIcon(19), title: '合规风险预警', desc: '识别投标文件中潜在的资质不符、条款冲突等合规风险，提前预警并提供整改建议' },
+    ],
+    steps: [
+      { title: '上传招标文件', desc: '支持批量上传或 API 对接，自动识别文件类型与结构' },
+      { title: '关键信息提取', desc: 'AI 解析评分标准、资质要求、技术商务条款，形成结构化信息表' },
+      { title: '资料比对分析', desc: '与投标资料库逐项比对，生成完整度报告与差异清单' },
+      { title: '报告生成', desc: '输出招标分析报告、资料完整度报告、差异性报告，支持一键导出' },
+    ],
+    workflow: [
+      { col: [
+        { type:'start', icon:'▶', typeLabel:'Start', title:'文件输入', desc:'招标文件\n投标资料库' },
+      ]},
+      { col: [
+        { type:'tool', icon:'⚙', typeLabel:'Tool', title:'文件解析', desc:'结构识别\n格式标准化' },
+      ]},
+      { col: [
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'关键信息提取', desc:'评分/资质\n技术商务条款' },
+      ]},
+      { col: [
+        { type:'if', icon:'⟐', typeLabel:'IF/ELSE', title:'单/多文件', desc:'单份解析\n多份比对分流' },
+      ]},
+      { col: [
+        { type:'kb', icon:'📚', typeLabel:'知识库', title:'资料比对', desc:'与投标库\n逐项核查' },
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'差异分析', desc:'多文件关键\n点横向比对' },
+      ]},
+      { col: [
+        { type:'llm', icon:'🤖', typeLabel:'LLM', title:'合规预警', desc:'资质不符\n风险识别' },
+        { type:'code', icon:'</>', typeLabel:'Code', title:'完整度评估', desc:'缺失项统计\n补充建议' },
+      ]},
+      { col: [
+        { type:'end', icon:'■', typeLabel:'End', title:'报告输出', desc:'分析/完整度\n差异报告导出' },
+      ]},
+    ],
+  },
+];
+
+// ── FEATURE ICONS ─────────────────────────────────────────────
+function featureIcon(n) {
+  const icons = [
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 1.5l1.4 4.2H13L9.5 8l1.3 4L7.5 10 4.2 12l1.3-4L2 5.7h4.1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1.5" y="1.5" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="8.5" y="1.5" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1.5" y="8.5" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="8.5" y="8.5" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M5 7.5l2 2 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1.5" y="1.5" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 5.5h6M4.5 8h6M4.5 10.5h3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 1.5v5m0 0L5 4m2.5 2.5L10 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7.5" cy="10" r="3.5" stroke="currentColor" stroke-width="1.3"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 3h9a1 1 0 011 1v5a1 1 0 01-1 1H5l-3 2V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1" y="2.5" width="5" height="4" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="2.5" width="5" height="4" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="5" height="4" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="5" height="4" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M6 4.5h3M6 11h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 4h11M2 7.5h8M2 11h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><rect x="9.5" y="8.5" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 4.5V7.5l2 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="5" cy="7.5" r="3" stroke="currentColor" stroke-width="1.3"/><circle cx="11" cy="4" r="2.5" stroke="currentColor" stroke-width="1.2"/><circle cx="11" cy="11" r="2.5" stroke="currentColor" stroke-width="1.2"/><path d="M8 7.5h3M8 7l2.5-2.5M8 8l2.5 2.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1.5" y="1.5" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 7.5h6M4.5 10h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M4.5 5h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M4 1.5h5l4 4v8a1 1 0 01-1 1H4a1 1 0 01-1-1V2.5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.3"/><path d="M9 1.5v4h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M5 9.5h5M5 12h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="4" r="2.5" stroke="currentColor" stroke-width="1.3"/><circle cx="3" cy="11" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="12" cy="11" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 6.5v2M5 10.5l2-2M10 10.5l-2-2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1.5" y="3" width="12" height="9" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M5 3V2M7.5 3V2M10 3V2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M4 6.5h7M4 9h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 11l2.5-3.5 2.5 2L9.5 5l3 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 13h12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="2" y="5.5" width="11" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 5.5V4a2.5 2.5 0 015 0v1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1.5" y="1.5" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 5h6M4.5 7.5h6M4.5 10h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="11" cy="10" r="1.5" fill="currentColor" opacity="0.6"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M3 3h9v9H3z" stroke="currentColor" stroke-width="1.3" rx="1"/><path d="M3 3h4v4H3zM8 3h4v4H8zM3 8h4v4H3zM8 8h4v4H8z" stroke="currentColor" stroke-width="0.9"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="4" cy="11.5" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="11.5" cy="11.5" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="7.5" cy="3.5" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M5.7 11.5H4M11.5 11.5H9.8M7.5 5.5v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M5.5 11.5l2-2 2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v11M2 7.5h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><rect x="4" y="4" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1" opacity="0.5"/></svg>`,
+  ];
+  return icons[n % icons.length];
+}
+
+// ── MAIN ICONS (面状写实风格) ──────────────────────────────────
+const CARD_ICONS = [
+  // A: 智能合同审核 — 合同文件+放大镜+对勾
+  (color, bg) => `<svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+    <rect x="4" y="2" width="15" height="20" rx="2.5" fill="${color}" opacity="0.15"/>
+    <rect x="4" y="2" width="15" height="20" rx="2.5" stroke="${color}" stroke-width="1.4"/>
+    <rect x="7" y="7" width="9" height="1.8" rx="0.9" fill="${color}" opacity="0.5"/>
+    <rect x="7" y="11" width="7" height="1.8" rx="0.9" fill="${color}" opacity="0.5"/>
+    <rect x="7" y="15" width="8" height="1.8" rx="0.9" fill="${color}" opacity="0.5"/>
+    <circle cx="20" cy="20" r="6" fill="${bg}"/>
+    <circle cx="20" cy="20" r="6" stroke="${color}" stroke-width="1.5"/>
+    <circle cx="19" cy="19" r="3" fill="${color}" opacity="0.2"/>
+    <circle cx="19" cy="19" r="3" stroke="${color}" stroke-width="1.2"/>
+    <path d="M21.5 21.5l2.5 2.5" stroke="${color}" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M17.5 19l1.5 1.5 2.5-2.5" stroke="${color}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`,
+  // B: 智能会议 — 麦克风+声波
+  (color, bg) => `<svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+    <rect x="10" y="3" width="8" height="13" rx="4" fill="${color}" opacity="0.2"/>
+    <rect x="10" y="3" width="8" height="13" rx="4" stroke="${color}" stroke-width="1.5"/>
+    <path d="M7 14c0 3.87 3.13 7 7 7s7-3.13 7-7" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="14" y1="21" x2="14" y2="25" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="10" y1="25" x2="18" y2="25" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M3 11c0.5-0.5 1-0.5 1.5 0" stroke="${color}" stroke-width="1.3" stroke-linecap="round" opacity="0.5"/>
+    <path d="M1.5 9c1.5-1.5 3.5-1.5 5 0" stroke="${color}" stroke-width="1.3" stroke-linecap="round" opacity="0.35"/>
+    <path d="M24 11c-0.5-0.5-1-0.5-1.5 0" stroke="${color}" stroke-width="1.3" stroke-linecap="round" opacity="0.5"/>
+    <path d="M25.5 9c-1.5-1.5-3.5-1.5-5 0" stroke="${color}" stroke-width="1.3" stroke-linecap="round" opacity="0.35"/>
+  </svg>`,
+  // C: 律师小助手 — 天平+文书
+  (color, bg) => `<svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+    <rect x="5" y="14" width="8" height="5" rx="1.5" fill="${color}" opacity="0.2"/>
+    <rect x="5" y="14" width="8" height="5" rx="1.5" stroke="${color}" stroke-width="1.3"/>
+    <rect x="15" y="16" width="8" height="5" rx="1.5" fill="${color}" opacity="0.12"/>
+    <rect x="15" y="16" width="8" height="5" rx="1.5" stroke="${color}" stroke-width="1.3"/>
+    <path d="M5 16.5l9-9 9 11" stroke="${color}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="14" cy="7.5" r="1.5" fill="${color}" opacity="0.7"/>
+    <line x1="14" y1="9" x2="14" y2="24" stroke="${color}" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="10" y1="24" x2="18" y2="24" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>`,
+  // D: 产业链分析 — 网络节点+放射状
+  (color, bg) => `<svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+    <circle cx="14" cy="14" r="4" fill="${color}" opacity="0.25"/>
+    <circle cx="14" cy="14" r="4" stroke="${color}" stroke-width="1.5"/>
+    <circle cx="5" cy="7" r="2.5" fill="${color}" opacity="0.15"/>
+    <circle cx="5" cy="7" r="2.5" stroke="${color}" stroke-width="1.3"/>
+    <circle cx="23" cy="7" r="2.5" fill="${color}" opacity="0.15"/>
+    <circle cx="23" cy="7" r="2.5" stroke="${color}" stroke-width="1.3"/>
+    <circle cx="5" cy="21" r="2.5" fill="${color}" opacity="0.15"/>
+    <circle cx="5" cy="21" r="2.5" stroke="${color}" stroke-width="1.3"/>
+    <circle cx="23" cy="21" r="2.5" fill="${color}" opacity="0.15"/>
+    <circle cx="23" cy="21" r="2.5" stroke="${color}" stroke-width="1.3"/>
+    <line x1="7" y1="8.5" x2="11" y2="11.5" stroke="${color}" stroke-width="1.2" opacity="0.6"/>
+    <line x1="21" y1="8.5" x2="17" y2="11.5" stroke="${color}" stroke-width="1.2" opacity="0.6"/>
+    <line x1="7" y1="19.5" x2="11" y2="16.5" stroke="${color}" stroke-width="1.2" opacity="0.6"/>
+    <line x1="21" y1="19.5" x2="17" y2="16.5" stroke="${color}" stroke-width="1.2" opacity="0.6"/>
+  </svg>`,
+  // E: 招投标 — 文件+对比箭头+勾选
+  (color, bg) => `<svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+    <rect x="2" y="4" width="10" height="14" rx="2" fill="${color}" opacity="0.15"/>
+    <rect x="2" y="4" width="10" height="14" rx="2" stroke="${color}" stroke-width="1.4"/>
+    <rect x="4" y="7" width="6" height="1.5" rx="0.75" fill="${color}" opacity="0.5"/>
+    <rect x="4" y="10" width="5" height="1.5" rx="0.75" fill="${color}" opacity="0.5"/>
+    <rect x="4" y="13" width="6" height="1.5" rx="0.75" fill="${color}" opacity="0.5"/>
+    <rect x="16" y="4" width="10" height="14" rx="2" fill="${color}" opacity="0.15"/>
+    <rect x="16" y="4" width="10" height="14" rx="2" stroke="${color}" stroke-width="1.4"/>
+    <rect x="18" y="7" width="6" height="1.5" rx="0.75" fill="${color}" opacity="0.5"/>
+    <rect x="18" y="10" width="5" height="1.5" rx="0.75" fill="${color}" opacity="0.5"/>
+    <rect x="18" y="13" width="6" height="1.5" rx="0.75" fill="rgba(217,119,6,0.6)"/>
+    <path d="M11 11h2l-1-2M15 11h2l-1-2" stroke="${color}" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+    <path d="M10 11h8" stroke="${color}" stroke-width="1.3" stroke-linecap="round"/>
+    <rect x="8" y="21" width="12" height="5" rx="2.5" fill="${color}" opacity="0.9"/>
+    <path d="M11 23.5l1.5 1.5 3-3" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`,
+];
+
+// ── STATE ─────────────────────────────────────────────────────
+let current = 0;
+const N = SCENES.length;
+
+// ── BUILD ─────────────────────────────────────────────────────
+function buildCards() {
+  const stage = document.getElementById('stage');
+  SCENES.forEach((s, i) => {
+    const card = document.createElement('div');
+    card.className = 'scene-card';
+    card.dataset.index = i;
+    card.innerHTML = `
+      <div class="card-glow-top" style="background:radial-gradient(ellipse at 50% 0%,${s.bgAlpha} 0%,transparent 70%)"></div>
+      <div class="card-top-line"></div>
+      <div class="card-body">
+        <div class="card-left">
+          <div class="card-tag" style="color:${s.color};background:${s.bgAlpha}">${s.tag}</div>
+          <div class="card-icon-name">
+            <div class="card-icon" style="background:${s.bgAlpha}">${CARD_ICONS[i](s.color, 'rgba(255,255,255,0.8)')}</div>
+            <div class="card-name">${s.name.replace('\n','<br>')}</div>
+          </div>
+          <div class="card-desc">${s.desc}</div>
+          <div class="card-illustration">${ILLUSTRATIONS[i](s.color)}</div>
+          <div class="card-values">
+            ${s.values.map(v=>`<div class="value-chip"><div class="value-dot" style="background:${s.color}"></div>${v}</div>`).join('')}
+          </div>
+        </div>
+        <div class="card-right">
+          <div class="card-right-label">核心功能</div>
+          <div class="features-list">
+            ${s.features.map(f=>`
+              <div class="feature-item">
+                <div class="feature-icon" style="background:${s.bgAlpha};color:${s.color}">${f.icon}</div>
+                <div class="feature-body"><h4>${f.title}</h4><p>${f.desc}</p></div>
+              </div>`).join('')}
+          </div>
+          <div class="card-cta-row">
+            <span class="card-cta-hint">点击查看完整方案 →</span>
+            <a class="card-cta-btn" href="#"
+               style="background:linear-gradient(135deg,${s.color},${s.colorDark})"
+               onclick="event.preventDefault();openDetail(${i})">
+              查看详情
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 3l3 3.5-3 3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>`;
+    card.addEventListener('click', e => {
+      if (e.target.closest('.card-cta-btn')) return;
+      const idx = parseInt(card.dataset.index);
+      if (idx === current) openDetail(idx); else goTo(idx);
+    });
+    stage.appendChild(card);
+  });
+}
+
+function buildDots() {
+  const el = document.getElementById('dots');
+  SCENES.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.addEventListener('click', () => goTo(i));
+    el.appendChild(d);
+  });
+}
+
+function updateUI() {
+  const cards = document.querySelectorAll('.scene-card');
+  const dots  = document.querySelectorAll('.dot');
+  const s = SCENES[current];
+
+  cards.forEach((card, i) => {
+    card.classList.remove('pos-center','pos-left','pos-right','pos-left-far','pos-right-far');
+    const diff = ((i - current + N) % N);
+    const sym  = diff > N / 2 ? diff - N : diff;
+    if      (sym ===  0) card.classList.add('pos-center');
+    else if (sym === -1) card.classList.add('pos-left');
+    else if (sym ===  1) card.classList.add('pos-right');
+    else if (sym <= -2)  card.classList.add('pos-left-far');
+    else                 card.classList.add('pos-right-far');
+  });
+
+  dots.forEach((d, i) => {
+    d.classList.toggle('active', i === current);
+    d.style.background = i === current ? `linear-gradient(90deg,${s.color},${s.colorDark})` : '';
+    d.style.boxShadow  = i === current ? `0 0 10px ${s.color}60` : '';
+  });
+
+  document.getElementById('bgGlow').innerHTML = `
+    <div class="bg-orb" style="width:720px;height:720px;background:radial-gradient(circle,${s.orbColor} 0%,transparent 70%);top:-200px;left:50%;transform:translateX(-50%);transition:background 0.6s"></div>
+    <div class="bg-orb" style="width:420px;height:320px;background:radial-gradient(circle,rgba(0,47,167,0.04) 0%,transparent 70%);bottom:5%;right:4%"></div>`;
+}
+
+function goTo(idx) {
+  current = ((idx % N) + N) % N;
+  updateUI();
+}
+
+// ── DIFY WORKFLOW RENDERER (SVG bezier curves) ────────────────
+function renderDifyFlow(s, idx) {
+  const container = document.getElementById('dify-flow-' + idx);
+  if (!container) return;
+
+  const NODE_W = 128;   // node width
+  const NODE_H = 78;    // approx node height (fixed for layout)
+  const COL_GAP = 56;   // horizontal gap between cols
+  const ROW_GAP = 14;   // vertical gap between nodes in same col
+  const PAD_X   = 28;   // canvas horizontal padding
+  const PAD_Y   = 28;   // canvas vertical padding
+
+  const cols = s.workflow;
+
+  // ── 1. compute positions ──────────────────────────────────────
+  // Each col: colX = PAD_X + ci*(NODE_W+COL_GAP)
+  // Nodes in col stack vertically, centered on col midY
+  const colData = cols.map((col, ci) => {
+    const n = col.col.length;
+    const colH = n * NODE_H + (n - 1) * ROW_GAP;
+    return { nodes: col.col, colH, ci };
+  });
+
+  // total canvas height = max colH + 2*PAD_Y
+  const maxColH = Math.max(...colData.map(c => c.colH));
+  const canvasH = maxColH + PAD_Y * 2;
+  const canvasW = cols.length * NODE_W + (cols.length - 1) * COL_GAP + PAD_X * 2;
+
+  // node absolute rects: { x, y, cx, cy } (cx/cy = center)
+  const nodeRects = colData.map(({ nodes, colH, ci }) => {
+    const colX = PAD_X + ci * (NODE_W + COL_GAP);
+    const topY  = PAD_Y + (maxColH - colH) / 2;
+    return nodes.map((_, ni) => {
+      const y = topY + ni * (NODE_H + ROW_GAP);
+      return { x: colX, y, w: NODE_W, h: NODE_H,
+               cx: colX + NODE_W / 2, cy: y + NODE_H / 2 };
+    });
+  });
+
+  // ── 2. build HTML nodes ───────────────────────────────────────
+  container.style.height = canvasH + 'px';
+  container.style.width  = canvasW + 'px';
+  container.style.minWidth = canvasW + 'px';
+
+  let nodesHTML = '';
+  colData.forEach(({ nodes, ci }) => {
+    nodes.forEach((n, ni) => {
+      const r = nodeRects[ci][ni];
+      nodesHTML += `
+        <div class="dify-col" style="left:${r.x}px;top:${r.y}px;width:${NODE_W}px;">
+          <div class="dify-node type-${n.type}" style="width:${NODE_W}px;">
+            <div class="dify-node-header">
+              <div class="dify-node-icon">${nodeIcon(n.type)}</div>
+              <span class="dify-node-type">${n.typeLabel}</span>
+            </div>
+            <div class="dify-node-title">${n.title}</div>
+            <div class="dify-node-desc">${n.desc.replace(/\n/g,'<br>')}</div>
+          </div>
+        </div>`;
+    });
+  });
+
+  // ── 3. build SVG bezier paths ─────────────────────────────────
+  // Strategy: from each node in col[ci], draw a curve to each node in col[ci+1]
+  // If 1→1: simple S-curve
+  // If 1→N: fan out from right-center of source to left-center of each target
+  // If N→1: fan in
+  let paths = '';
+  const strokeColor = 'rgba(0,47,167,0.22)';
+  const strokeW = 1.6;
+
+  for (let ci = 0; ci < colData.length - 1; ci++) {
+    const srcNodes  = nodeRects[ci];
+    const dstNodes  = nodeRects[ci + 1];
+
+    srcNodes.forEach((src) => {
+      dstNodes.forEach((dst, di) => {
+        const x1 = src.x + NODE_W;      // right edge of src
+        const y1 = src.cy;              // vertical center of src
+        const x2 = dst.x;              // left edge of dst
+        const y2 = dst.cy;             // vertical center of dst
+
+        const dx = x2 - x1;
+        const cpOffset = Math.max(dx * 0.45, 20);
+
+        // cubic bezier: C (x1+cpOffset,y1) (x2-cpOffset,y2) (x2,y2)
+        const d = `M ${x1} ${y1} C ${x1 + cpOffset} ${y1}, ${x2 - cpOffset} ${y2}, ${x2} ${y2}`;
+
+        // arrowhead at endpoint
+        const arrowAngle = Math.atan2(y2 - (y2), (x2) - (x2 - cpOffset * 0.3));
+        // simplified: arrowhead always points right since we end horizontal
+        const ax = x2, ay = y2;
+        const arrowPath = `M ${ax - 7} ${ay - 3.5} L ${ax} ${ay} L ${ax - 7} ${ay + 3.5}`;
+
+        // color by source node type for fan-out variety
+        const srcType = colData[ci].nodes[0].type;
+        let lineColor = strokeColor;
+        if (dstNodes.length > 1) {
+          // fan-out: tint each branch slightly
+          const tints = ['rgba(0,47,167,0.28)','rgba(124,58,237,0.22)','rgba(8,145,178,0.22)'];
+          lineColor = tints[di % tints.length];
+        }
+
+        paths += `
+          <path d="${d}" fill="none" stroke="${lineColor}" stroke-width="${strokeW}" stroke-linecap="round"/>
+          <path d="${arrowPath}" fill="none" stroke="${lineColor}" stroke-width="${strokeW}" stroke-linecap="round" stroke-linejoin="round"/>`;
+      });
+    });
+  }
+
+  const svgLayer = `<svg class="dify-svg-layer" width="${canvasW}" height="${canvasH}" viewBox="0 0 ${canvasW} ${canvasH}">${paths}</svg>`;
+
+  container.innerHTML = svgLayer + nodesHTML;
+}
+
+// ── DIFY NODE ICONS ───────────────────────────────────────────
+function nodeIcon(type) {
+  const m = {
+    start: `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="1"/><polygon points="5,3.5 9,6 5,8.5" fill="currentColor"/></svg>`,
+    end:   `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="1"/><rect x="3.5" y="3.5" width="5" height="5" rx="1" fill="currentColor"/></svg>`,
+    llm:   `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="2" width="10" height="8" rx="2" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="1"/><path d="M3.5 5h5M3.5 7h3" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>`,
+    tool:  `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="2" fill="currentColor"/><path d="M6 1v2M6 9v2M1 6h2M9 6h2M2.5 2.5l1.5 1.5M8 8l1.5 1.5M2.5 9.5l1.5-1.5M8 4l1.5-1.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>`,
+    code:  `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="2" width="10" height="8" rx="1.5" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="1"/><path d="M4 5l-2 1.5L4 8M8 5l2 1.5L8 8M6 4.5l-1 3" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>`,
+    if:    `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1l5 5-5 5-5-5z" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="1"/><path d="M4 6h4M6 4v4" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>`,
+    kb:    `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="2" y="1" width="8" height="10" rx="1.5" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="1"/><path d="M4 4h4M4 6h4M4 8h2" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>`,
+    http:  `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="1"/><path d="M3 6h6M6 3c-1 1-1.5 1.9-1.5 3S5 8 6 9M6 3c1 1 1.5 1.9 1.5 3S7 8 6 9" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>`,
+  };
+  return m[type] || m.tool;
+}
+
+// ── DETAIL ────────────────────────────────────────────────────
+function openDetail(idx) {
+  const s = SCENES[idx];
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-tag" style="color:${s.color};background:${s.bgAlpha}">${s.tag}</div>
+    <div class="detail-title" style="background:linear-gradient(135deg,${s.color},${s.colorDark});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
+      ${s.name.replace('\n',' ')}
+    </div>
+    <div class="detail-sub">${s.desc}</div>
+    <div class="d-section">
+      <div class="d-label">核心价值</div>
+      <div class="d-values">
+        ${s.values.map(v=>`<div class="d-value"><div class="d-value-dot" style="background:${s.color}"></div>${v}</div>`).join('')}
+      </div>
+    </div>
+    <div class="detail-divider"></div>
+    <div class="d-section">
+      <div class="d-label">核心功能</div>
+      <div class="d-features">
+        ${s.features.map(f=>`
+          <div class="d-feature">
+            <div class="d-feature-icon" style="background:${s.bgAlpha};color:${s.color}">${f.icon}</div>
+            <h4>${f.title}</h4><p>${f.desc}</p>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="detail-divider"></div>
+    <div class="d-section">
+      <div class="d-label">落地流程</div>
+      <div class="d-flow">
+        ${s.steps.map((st,i)=>`
+          <div class="d-step">
+            <div class="d-step-num" style="background:${s.bgAlpha};color:${s.color}">${String(i+1).padStart(2,'0')}</div>
+            <div><h4>${st.title}</h4><p>${st.desc}</p></div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="detail-divider"></div>
+    <div class="dify-section">
+      <div class="dify-label-row">
+        <div class="d-label" style="margin-bottom:0">Dify 工作流</div>
+        <div class="dify-badge">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="4" height="4" rx="1" fill="#002FA7" opacity="0.7"/><rect x="7" y="1" width="4" height="4" rx="1" fill="#002FA7" opacity="0.4"/><rect x="1" y="7" width="4" height="4" rx="1" fill="#002FA7" opacity="0.4"/><rect x="7" y="7" width="4" height="4" rx="1" fill="#002FA7" opacity="0.7"/></svg>
+          虚拟流程示意
+        </div>
+      </div>
+      <div class="dify-canvas">
+        <div class="dify-flow" id="dify-flow-${idx}">
+        </div>
+      </div>
+    </div>
+    <div class="d-cta">
+      <h3>申请「${s.name.replace('\n','')}」方案演示</h3>
+      <p>30 分钟演示，了解该场景在您所在行业的完整落地路径与客户案例</p>
+      <a class="btn-cta" href="#"
+         style="background:linear-gradient(135deg,${s.color},${s.colorDark});box-shadow:0 8px 24px ${s.color}30">
+        预约演示
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>`;
+  const dp = document.getElementById('detailPage');
+  dp.classList.add('visible');
+  dp.scrollTop = 0;
+  // 渲染 Dify 工作流（DOM ready 后执行）
+  requestAnimationFrame(() => renderDifyFlow(s, idx));
+}
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  document.getElementById('detailPage').classList.remove('visible');
+});
+document.getElementById('prevBtn').addEventListener('click', () => goTo(current - 1));
+document.getElementById('nextBtn').addEventListener('click', () => goTo(current + 1));
+document.addEventListener('keydown', e => {
+  const dp = document.getElementById('detailPage');
+  if (dp.classList.contains('visible')) { if (e.key === 'Escape') dp.classList.remove('visible'); return; }
+  if (e.key === 'ArrowLeft')  goTo(current - 1);
+  if (e.key === 'ArrowRight') goTo(current + 1);
+});
+
+buildCards();
+buildDots();
+updateUI();
+</script>
+</body>
+</html>
