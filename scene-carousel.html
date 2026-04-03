@@ -433,9 +433,7 @@
   /* ── DETAIL PAGE ── */
   .detail-page {
     display: none; position: fixed; inset: 0; z-index: 200;
-    background: #0A1628; overflow-y: auto;
-    background-image:
-      radial-gradient(ellipse 70% 40% at 50% 0%, rgba(20,60,160,0.3) 0%, transparent 60%);
+    background: #F5F7FB; overflow-y: auto;
   }
   .detail-page.visible {
     display: block;
@@ -445,24 +443,41 @@
     from { opacity: 0; transform: translateY(20px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+  /* 详情页顶部 accent 条 */
+  .detail-page::before {
+    content: ''; display: block; height: 4px;
+    background: linear-gradient(90deg, #0066FF 0%, #7B3FFF 100%);
+    position: sticky; top: 0; z-index: 20;
+  }
   .detail-nav {
-    position: sticky; top: 0; z-index: 10;
-    padding: 0 60px; height: 64px;
-    background: rgba(10,22,40,0.92); backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(80,140,255,0.1);
+    position: sticky; top: 4px; z-index: 10;
+    padding: 0 60px; height: 60px;
+    background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0,0,0,0.07);
     display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
   }
   .back-btn {
     display: flex; align-items: center; gap: 10px;
-    cursor: pointer; font-size: 14px; color: var(--dim);
+    cursor: pointer; font-size: 14px; color: #5A6A85;
     transition: color 0.2s; background: none; border: none; padding: 0;
   }
-  .back-btn:hover { color: var(--text); }
+  .back-btn:hover { color: #1A2B4A; }
   .back-btn:hover svg { transform: translateX(-3px); }
   .back-btn svg { transition: transform 0.2s; }
-  .detail-nav-logo { font-size: 15px; font-weight: 800; color: rgba(140,170,255,0.3); }
+  .detail-nav-logo { font-size: 15px; font-weight: 800; color: rgba(30,50,100,0.25); }
 
-  .detail-body { max-width: 920px; margin: 0 auto; padding: 72px 60px 100px; }
+  .detail-body { }
+  .detail-body-inner { max-width: 920px; margin: 0 auto; }
+  .detail-hero {
+    background: linear-gradient(135deg, #0A1628 0%, #0F2456 60%, #1a1060 100%);
+    padding: 64px 60px 72px;
+  }
+  .detail-content {
+    background: #FFFFFF;
+    padding: 56px 60px 80px;
+  }
+  .detail-content-inner { max-width: 920px; margin: 0 auto; }
   .detail-tag {
     display: inline-flex; align-items: center; gap: 7px;
     font-size: 11px; font-weight: 700; letter-spacing: 1px;
@@ -471,41 +486,44 @@
   }
   .detail-title {
     font-size: clamp(34px, 5vw, 54px); font-weight: 800;
-    letter-spacing: -2px; line-height: 1.1; margin-bottom: 16px; color: var(--text);
+    letter-spacing: -2px; line-height: 1.1; margin-bottom: 16px;
+    color: #FFFFFF;
   }
-  .detail-sub { font-size: 17px; color: rgba(200,215,255,0.85); line-height: 1.75; max-width: 640px; margin-bottom: 48px; }
-  .detail-divider { height: 1px; background: rgba(80,140,255,0.15); margin: 44px 0; }
+  .detail-sub { font-size: 17px; color: rgba(200,218,255,0.82); line-height: 1.75; max-width: 640px; margin-bottom: 0; }
+  .detail-divider { height: 1px; background: #E8EDF5; margin: 44px 0; }
   .d-section { margin-bottom: 52px; }
   .d-label {
     font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
-    text-transform: uppercase; color: rgba(140,180,255,0.6); margin-bottom: 20px;
+    text-transform: uppercase; color: #8A9BB8; margin-bottom: 20px;
   }
   .d-values { display: flex; flex-wrap: wrap; gap: 10px; }
   .d-value {
     display: flex; align-items: center; gap: 9px;
-    background: rgba(30,55,100,0.7);
-    border: 1px solid rgba(80,140,255,0.25);
+    background: #F0F4FF;
+    border: 1px solid #D4DEFF;
     border-radius: 10px; padding: 11px 16px;
-    font-size: 14px; color: rgba(220,232,255,0.92);
+    font-size: 14px; color: #1A2B4A; font-weight: 500;
   }
   .d-value-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .d-features { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .d-feature {
-    background: rgba(20,40,80,0.75);
-    border: 1px solid rgba(80,140,255,0.18);
+    background: #F8FAFF;
+    border: 1px solid #E4EBFA;
     border-radius: 14px; padding: 22px;
+    transition: box-shadow 0.2s, transform 0.15s;
   }
+  .d-feature:hover { box-shadow: 0 4px 16px rgba(0,60,200,0.08); transform: translateY(-2px); }
   .d-feature-icon {
     width: 38px; height: 38px; border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
     margin-bottom: 12px;
   }
-  .d-feature h4 { font-size: 14px; font-weight: 700; color: #E8EEFF; margin-bottom: 6px; }
-  .d-feature p  { font-size: 13px; color: rgba(190,210,255,0.75); line-height: 1.65; }
+  .d-feature h4 { font-size: 14px; font-weight: 700; color: #1A2B4A; margin-bottom: 6px; }
+  .d-feature p  { font-size: 13px; color: #5A6A85; line-height: 1.65; }
   .d-flow { display: flex; flex-direction: column; }
   .d-step {
     display: flex; gap: 16px; align-items: flex-start;
-    padding: 20px 0; border-bottom: 1px solid rgba(80,140,255,0.1);
+    padding: 20px 0; border-bottom: 1px solid #EEF1F8;
   }
   .d-step:last-child { border-bottom: none; }
   .d-step-num {
@@ -513,16 +531,16 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 11px; font-weight: 800; flex-shrink: 0;
   }
-  .d-step h4 { font-size: 14px; font-weight: 700; color: #E8EEFF; margin-bottom: 4px; }
-  .d-step p  { font-size: 13px; color: rgba(190,210,255,0.75); line-height: 1.6; }
+  .d-step h4 { font-size: 14px; font-weight: 700; color: #1A2B4A; margin-bottom: 4px; }
+  .d-step p  { font-size: 13px; color: #5A6A85; line-height: 1.6; }
   .d-cta {
     border-radius: 20px; padding: 44px; text-align: center; margin-top: 8px;
-    background: rgba(20,40,80,0.8);
-    border: 1px solid rgba(80,140,255,0.25);
-    box-shadow: 0 0 40px rgba(0,100,255,0.08);
+    background: linear-gradient(135deg, #0A1628 0%, #0F2456 100%);
+    border: none;
+    box-shadow: 0 8px 40px rgba(0,60,200,0.18);
   }
-  .d-cta h3 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 10px; color: #E8EEFF; }
-  .d-cta p  { font-size: 15px; color: rgba(190,210,255,0.75); margin-bottom: 28px; line-height: 1.65; }
+  .d-cta h3 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 10px; color: #FFFFFF; }
+  .d-cta p  { font-size: 15px; color: rgba(200,215,255,0.80); margin-bottom: 28px; line-height: 1.65; }
   .btn-cta {
     display: inline-flex; align-items: center; gap: 8px;
     color: #FFFFFF; font-size: 15px; font-weight: 700;
@@ -749,7 +767,7 @@
     </button>
     <div class="detail-nav-logo">AgentOS</div>
   </div>
-  <div class="detail-body" id="detailBody"></div>
+  <div id="detailBody"></div>
 </div>
 
 <script>
@@ -1983,61 +2001,69 @@ function nodeIcon(type) {
 function openDetail(idx) {
   const s = SCENES[idx];
   document.getElementById('detailBody').innerHTML = `
-    <div class="detail-tag" style="color:${s.color};background:${s.bgAlpha}">${s.tag}</div>
-    <div class="detail-title" style="background:linear-gradient(135deg,${s.color},${s.colorDark});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
-      ${s.name.replace('\n',' ')}
-    </div>
-    <div class="detail-sub">${s.desc}</div>
-    <div class="d-section">
-      <div class="d-label">核心价值</div>
-      <div class="d-values">
-        ${s.values.map(v=>`<div class="d-value"><div class="d-value-dot" style="background:${s.color}"></div>${v}</div>`).join('')}
+    <div class="detail-hero">
+      <div class="detail-body-inner">
+        <div class="detail-tag" style="color:${s.color};background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2)">${s.tag}</div>
+        <div class="detail-title">
+          ${s.name.replace('\n',' ')}
+        </div>
+        <div class="detail-sub">${s.desc}</div>
       </div>
     </div>
-    <div class="detail-divider"></div>
-    <div class="d-section">
-      <div class="d-label">核心功能</div>
-      <div class="d-features">
-        ${s.features.map(f=>`
-          <div class="d-feature">
-            <div class="d-feature-icon" style="background:${s.bgAlpha};color:${s.color}">${f.icon}</div>
-            <h4>${f.title}</h4><p>${f.desc}</p>
-          </div>`).join('')}
-      </div>
-    </div>
-    <div class="detail-divider"></div>
-    <div class="d-section">
-      <div class="d-label">落地流程</div>
-      <div class="d-flow">
-        ${s.steps.map((st,i)=>`
-          <div class="d-step">
-            <div class="d-step-num" style="background:${s.bgAlpha};color:${s.color}">${String(i+1).padStart(2,'0')}</div>
-            <div><h4>${st.title}</h4><p>${st.desc}</p></div>
-          </div>`).join('')}
-      </div>
-    </div>
-    <div class="detail-divider"></div>
-    <div class="dify-section">
-      <div class="dify-label-row">
-        <div class="d-label" style="margin-bottom:0">AI 工作流</div>
-        <div class="dify-badge">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="4" height="4" rx="1" fill="#002FA7" opacity="0.7"/><rect x="7" y="1" width="4" height="4" rx="1" fill="#002FA7" opacity="0.4"/><rect x="1" y="7" width="4" height="4" rx="1" fill="#002FA7" opacity="0.4"/><rect x="7" y="7" width="4" height="4" rx="1" fill="#002FA7" opacity="0.7"/></svg>
-          流程示意
+    <div class="detail-content">
+      <div class="detail-content-inner">
+        <div class="d-section">
+          <div class="d-label">核心价值</div>
+          <div class="d-values">
+            ${s.values.map(v=>`<div class="d-value"><div class="d-value-dot" style="background:${s.color}"></div>${v}</div>`).join('')}
+          </div>
+        </div>
+        <div class="detail-divider"></div>
+        <div class="d-section">
+          <div class="d-label">核心功能</div>
+          <div class="d-features">
+            ${s.features.map(f=>`
+              <div class="d-feature">
+                <div class="d-feature-icon" style="background:${s.bgAlpha};color:${s.color}">${f.icon}</div>
+                <h4>${f.title}</h4><p>${f.desc}</p>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="detail-divider"></div>
+        <div class="d-section">
+          <div class="d-label">落地流程</div>
+          <div class="d-flow">
+            ${s.steps.map((st,i)=>`
+              <div class="d-step">
+                <div class="d-step-num" style="background:${s.bgAlpha};color:${s.color}">${String(i+1).padStart(2,'0')}</div>
+                <div><h4>${st.title}</h4><p>${st.desc}</p></div>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="detail-divider"></div>
+        <div class="dify-section">
+          <div class="dify-label-row">
+            <div class="d-label" style="margin-bottom:0">AI 工作流</div>
+            <div class="dify-badge">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="4" height="4" rx="1" fill="#002FA7" opacity="0.7"/><rect x="7" y="1" width="4" height="4" rx="1" fill="#002FA7" opacity="0.4"/><rect x="1" y="7" width="4" height="4" rx="1" fill="#002FA7" opacity="0.4"/><rect x="7" y="7" width="4" height="4" rx="1" fill="#002FA7" opacity="0.7"/></svg>
+              流程示意
+            </div>
+          </div>
+          <div class="dify-canvas">
+            <div class="dify-flow" id="dify-flow-${idx}">
+            </div>
+          </div>
+        </div>
+        <div class="d-cta">
+          <h3>申请「${s.name.replace('\n','')}」方案演示</h3>
+          <p>30 分钟演示，了解该场景在您所在行业的完整落地路径与客户案例</p>
+          <a class="btn-cta" href="#"
+             style="background:linear-gradient(135deg,${s.color},${s.colorDark});box-shadow:0 8px 24px ${s.color}30">
+            预约演示
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
         </div>
       </div>
-      <div class="dify-canvas">
-        <div class="dify-flow" id="dify-flow-${idx}">
-        </div>
-      </div>
-    </div>
-    <div class="d-cta">
-      <h3>申请「${s.name.replace('\n','')}」方案演示</h3>
-      <p>30 分钟演示，了解该场景在您所在行业的完整落地路径与客户案例</p>
-      <a class="btn-cta" href="#"
-         style="background:linear-gradient(135deg,${s.color},${s.colorDark});box-shadow:0 8px 24px ${s.color}30">
-        预约演示
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </a>
     </div>`;
   const dp = document.getElementById('detailPage');
   dp.classList.add('visible');
