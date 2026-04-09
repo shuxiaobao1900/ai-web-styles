@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>合同审核智能体 · 信任感专业风</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue-900: #1E3A5F;
+    --blue-700: #1E40AF;
+    --blue-500: #3B82F6;
+    --blue-100: #DBEAFE;
+    --blue-50:  #EFF6FF;
+    --sky:      #0EA5E9;
+    --gray-800: #1E293B;
+    --gray-600: #475569;
+    --gray-400: #94A3B8;
+    --gray-100: #F1F5F9;
+    --white:    #FFFFFF;
+  }
+
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'PingFang SC', 'Noto Sans SC', sans-serif;
+    background: var(--white);
+    color: var(--gray-800);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--blue-900);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 60px; height: 68px;
+  }
+  .nav-logo {
+    font-size: 18px; font-weight: 800; color: var(--white);
+    letter-spacing: -0.5px; text-decoration: none;
+  }
+  .nav-logo em { font-style: normal; color: var(--sky); }
+  .nav-links { display: flex; gap: 32px; }
+  .nav-links a {
+    font-size: 14px; color: rgba(255,255,255,0.7);
+    text-decoration: none; transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--white); }
+  .nav-cta {
+    font-size: 14px; font-weight: 600; color: var(--blue-900);
+    background: var(--sky); padding: 9px 22px; border-radius: 6px;
+    text-decoration: none; transition: opacity 0.2s;
+  }
+  .nav-cta:hover { opacity: 0.85; }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1160px; margin: 0 auto; padding: 0 60px; }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, var(--blue-900) 0%, #1a3560 50%, #0f2547 100%);
+    padding: 96px 0 88px;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 60% at 80% 40%, rgba(14,165,233,0.12) 0%, transparent 70%);
+  }
+  .hero-inner {
+    display: grid; grid-template-columns: 1fr 420px; gap: 64px; align-items: center;
+    position: relative;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.35);
+    border-radius: 100px; padding: 5px 14px;
+    font-size: 12px; font-weight: 600; color: var(--sky);
+    letter-spacing: 0.5px; margin-bottom: 24px;
+  }
+  .hero-badge span { width: 6px; height: 6px; border-radius: 50%; background: var(--sky); display: block; }
+  .hero h1 {
+    font-size: clamp(36px, 4.5vw, 58px);
+    font-weight: 800; line-height: 1.1;
+    letter-spacing: -1.5px; color: var(--white);
+    margin-bottom: 20px;
+  }
+  .hero h1 em { font-style: normal; color: var(--sky); }
+  .hero-sub {
+    font-size: 17px; color: rgba(255,255,255,0.65);
+    line-height: 1.75; max-width: 480px; margin-bottom: 40px;
+  }
+  .hero-actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--sky); color: var(--blue-900);
+    font-size: 15px; font-weight: 700; padding: 13px 28px; border-radius: 7px;
+    text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,165,233,0.35); }
+  .btn-ghost {
+    font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.75);
+    text-decoration: none; transition: color 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-ghost:hover { color: var(--white); }
+
+  /* Hero card */
+  .hero-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px; padding: 28px;
+    backdrop-filter: blur(12px);
+  }
+  .hero-card-title {
+    font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.5);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;
+  }
+  .risk-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .risk-item:last-child { border-bottom: none; }
+  .risk-badge {
+    font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;
+    min-width: 36px; text-align: center; flex-shrink: 0; margin-top: 1px;
+  }
+  .risk-high { background: rgba(239,68,68,0.2); color: #FCA5A5; }
+  .risk-mid  { background: rgba(245,158,11,0.2); color: #FCD34D; }
+  .risk-low  { background: rgba(34,197,94,0.2);  color: #86EFAC; }
+  .risk-text { font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.5; }
+  .risk-text strong { color: var(--white); font-weight: 600; display: block; }
+
+  /* ── STATS ── */
+  .stats-bar { background: var(--blue-50); border-bottom: 1px solid var(--blue-100); }
+  .stats-inner {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+  }
+  .stat-cell {
+    padding: 44px 40px;
+    border-right: 1px solid var(--blue-100);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-num {
+    font-size: 42px; font-weight: 800; color: var(--blue-700);
+    letter-spacing: -1.5px; line-height: 1;
+  }
+  .stat-label { font-size: 13px; color: var(--gray-600); }
+
+  /* ── SECTION BASE ── */
+  section { padding: 96px 0; }
+  .sec-eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--blue-500); margin-bottom: 14px;
+  }
+  .sec-title {
+    font-size: clamp(26px, 3vw, 40px); font-weight: 800;
+    letter-spacing: -1px; line-height: 1.2; color: var(--gray-800);
+    margin-bottom: 16px;
+  }
+  .sec-desc { font-size: 16px; color: var(--gray-600); line-height: 1.75; max-width: 520px; }
+
+  /* ── PROBLEM SECTION ── */
+  .problem-section { background: var(--gray-100); }
+  .problem-layout {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: start;
+  }
+  .problem-cards { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
+  .problem-card {
+    background: var(--white); border-radius: 10px;
+    border: 1px solid #E2E8F0;
+    padding: 24px; display: flex; gap: 16px;
+    transition: box-shadow 0.2s;
+  }
+  .problem-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .problem-icon-wrap {
+    width: 40px; height: 40px; border-radius: 8px;
+    background: var(--blue-50); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--blue-700);
+  }
+  .problem-card h4 { font-size: 15px; font-weight: 700; color: var(--gray-800); margin-bottom: 4px; }
+  .problem-card p  { font-size: 13px; color: var(--gray-600); line-height: 1.6; }
+
+  /* ── CAPABILITY ── */
+  .caps-header {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 64px;
+    align-items: end; margin-bottom: 56px;
+  }
+  .caps-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;
+  }
+  .cap-card {
+    border: 1px solid #E2E8F0; border-radius: 12px; padding: 32px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .cap-card:hover {
+    border-color: var(--blue-300, #93C5FD);
+    box-shadow: 0 4px 24px rgba(59,130,246,0.1);
+  }
+  .cap-card-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: var(--blue-50); margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--blue-700);
+  }
+  .cap-card h3 { font-size: 16px; font-weight: 700; color: var(--gray-800); margin-bottom: 8px; }
+  .cap-card p  { font-size: 14px; color: var(--gray-600); line-height: 1.65; }
+  .cap-card .cap-tag {
+    display: inline-block; margin-top: 14px;
+    font-size: 11px; font-weight: 600; color: var(--blue-700);
+    background: var(--blue-50); padding: 3px 10px; border-radius: 4px;
+  }
+
+  /* ── PROCESS ── */
+  .process-section { background: var(--gray-800); color: var(--white); }
+  .process-section .sec-eyebrow { color: var(--sky); }
+  .process-section .sec-title { color: var(--white); }
+  .process-section .sec-desc { color: rgba(255,255,255,0.55); max-width: 400px; }
+  .process-header {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+    align-items: center; margin-bottom: 64px;
+  }
+  .process-steps { display: flex; flex-direction: column; gap: 0; }
+  .process-step {
+    display: flex; gap: 28px; align-items: flex-start;
+    padding: 28px 0; border-bottom: 1px solid rgba(255,255,255,0.08);
+    position: relative;
+  }
+  .process-step:last-child { border-bottom: none; }
+  .step-dot {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(14,165,233,0.15); border: 1.5px solid rgba(14,165,233,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: var(--sky); flex-shrink: 0;
+  }
+  .step-body h4 { font-size: 15px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+  .step-body p  { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.6; }
+
+  /* ── TESTIMONIAL ── */
+  .testimonial-section { background: var(--blue-900); padding: 80px 0; }
+  .testi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+  .testi-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 32px;
+  }
+  .testi-stars { color: #FCD34D; font-size: 14px; margin-bottom: 14px; letter-spacing: 2px; }
+  .testi-text { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.75; margin-bottom: 20px; }
+  .testi-author { display: flex; align-items: center; gap: 12px; }
+  .testi-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(14,165,233,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: var(--sky);
+  }
+  .testi-name  { font-size: 13px; font-weight: 700; color: var(--white); }
+  .testi-role  { font-size: 12px; color: rgba(255,255,255,0.45); }
+
+  /* ── CTA ── */
+  .cta-section { padding: 100px 0; text-align: center; }
+  .cta-section .sec-title { max-width: 100%; margin: 0 auto 14px; }
+  .cta-section .sec-desc { max-width: 440px; margin: 0 auto 40px; text-align: center; }
+  .cta-group { display: flex; gap: 16px; justify-content: center; }
+  .btn-outline {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 15px; font-weight: 600; color: var(--blue-700);
+    border: 1.5px solid var(--blue-100); padding: 12px 26px; border-radius: 7px;
+    text-decoration: none; background: var(--blue-50);
+    transition: border-color 0.2s;
+  }
+  .btn-outline:hover { border-color: var(--blue-500); }
+
+  .btn-main {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--blue-700); color: var(--white);
+    font-size: 15px; font-weight: 700; padding: 13px 28px; border-radius: 7px;
+    text-decoration: none; transition: background 0.2s, transform 0.2s;
+  }
+  .btn-main:hover { background: var(--blue-900); transform: translateY(-1px); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--gray-800); color: rgba(255,255,255,0.4);
+    padding: 36px 0;
+  }
+  .footer-inner {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-logo { font-size: 15px; font-weight: 800; color: var(--white); }
+  .footer-logo em { font-style: normal; color: var(--sky); }
+  footer p { font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">Contract<em>AI</em></a>
+  <div class="nav-links">
+    <a href="#">产品功能</a>
+    <a href="#">应用场景</a>
+    <a href="#">客户案例</a>
+    <a href="#">安全合规</a>
+    <a href="#">联系我们</a>
+  </div>
+  <a class="nav-cta" href="#">申请演示</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-badge"><span></span>法务合规 · AI 智能体</div>
+        <h1>合同审核，<em>快10倍</em><br>风险归零</h1>
+        <p class="hero-sub">基于大语言模型的合同审核智能体，自动识别违约风险、不平等条款和合规隐患，将人工审核周期从数天压缩至分钟级。</p>
+        <div class="hero-actions">
+          <a class="btn-primary" href="#">
+            免费申请演示
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <a class="btn-ghost" href="#">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M6.5 5.5l4 2.5-4 2.5V5.5z" fill="currentColor"/>
+            </svg>
+            观看产品演示
+          </a>
+        </div>
+      </div>
+      <!-- 实时审核卡 -->
+      <div class="hero-card">
+        <div class="hero-card-title">实时风险检测结果</div>
+        <div class="risk-item">
+          <div class="risk-badge risk-high">高危</div>
+          <div class="risk-text">
+            <strong>第12条 · 违约金条款</strong>
+            违约金上限设置明显低于行业标准，建议修改为合同总价20%
+          </div>
+        </div>
+        <div class="risk-item">
+          <div class="risk-badge risk-mid">中危</div>
+          <div class="risk-text">
+            <strong>第7条 · 知识产权归属</strong>
+            未明确约定协作开发成果的归属，存在后期纠纷风险
+          </div>
+        </div>
+        <div class="risk-item">
+          <div class="risk-badge risk-low">低危</div>
+          <div class="risk-text">
+            <strong>第3条 · 交付验收标准</strong>
+            验收周期表述模糊，建议明确具体工作日数量
+          </div>
+        </div>
+        <div style="margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:rgba(255,255,255,0.4)">共识别 3 处风险点 · 用时 8 秒</span>
+          <span style="font-size:12px;font-weight:700;color:#86EFAC;">分析完成 ✓</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="container">
+    <div class="stats-inner">
+      <div class="stat-cell">
+        <div class="stat-num">92%</div>
+        <div class="stat-label">审核时间缩短</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">99.1%</div>
+        <div class="stat-label">风险条款识别率</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">5000+</div>
+        <div class="stat-label">已落地企业客户</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">200+</div>
+        <div class="stat-label">合同模板覆盖</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="problem-section">
+  <div class="container">
+    <div class="problem-layout">
+      <div>
+        <div class="sec-eyebrow">行业痛点</div>
+        <div class="sec-title">传统合同审核<br>代价有多高？</div>
+        <div class="sec-desc">每份合同背后，是法务团队数小时的重复劳动，以及难以被发现的潜在风险。</div>
+      </div>
+      <div class="problem-cards">
+        <div class="problem-card">
+          <div class="problem-icon-wrap">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M10 6v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <h4>审核周期长达 3-7 天</h4>
+            <p>人工逐条阅读，遇到大型框架合同往往需要一周以上，严重拖慢业务节奏</p>
+          </div>
+        </div>
+        <div class="problem-card">
+          <div class="problem-icon-wrap">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 2l2 6h6l-5 3.5 2 6L10 14l-5 3.5 2-6L2 8h6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <h4>关键风险条款漏审</h4>
+            <p>人工审核受疲劳、经验差异影响，重要条款漏检率达 15%-30%，事后追责代价极高</p>
+          </div>
+        </div>
+        <div class="problem-card">
+          <div class="problem-icon-wrap">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <h4>审核标准难以统一</h4>
+            <p>不同法务人员对相同条款认定标准不同，无法形成可传承的组织知识</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CAPABILITY -->
+<section>
+  <div class="container">
+    <div class="caps-header">
+      <div>
+        <div class="sec-eyebrow">核心能力</div>
+        <div class="sec-title">智能体能做<br>什么？</div>
+      </div>
+      <div class="sec-desc">覆盖合同全生命周期的智能审核能力，从风险识别到条款建议，全程辅助法务决策。</div>
+    </div>
+    <div class="caps-grid">
+      <div class="cap-card">
+        <div class="cap-card-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M11 3l1.8 5.4H18l-4.5 3.3 1.7 5.3L11 14l-4.2 3 1.7-5.3L4 8.4h5.2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>多维风险智能识别</h3>
+        <p>自动检测违约责任、知识产权、保密条款、管辖法院等20余类高频风险，并给出风险等级和修改建议。</p>
+        <span class="cap-tag">NLP · 法律知识图谱</span>
+      </div>
+      <div class="cap-card">
+        <div class="cap-card-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="12" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="3" y="12" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="12" y="12" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <h3>条款对比与差异分析</h3>
+        <p>与企业标准合同模板自动对比，高亮差异条款，给出是否偏离标准范围的判断，无需人工逐行比对。</p>
+        <span class="cap-tag">语义比对 · 模板库</span>
+      </div>
+      <div class="cap-card">
+        <div class="cap-card-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 11l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>法规合规自动检查</h3>
+        <p>内置最新劳动法、数据保护法、金融监管等法规数据库，自动验证合同条款合规性，实时更新法规变化。</p>
+        <span class="cap-tag">法规库 · 实时更新</span>
+      </div>
+      <div class="cap-card">
+        <div class="cap-card-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M4 17l4-4 3 3 4-5 3 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="3" y="3" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <h3>审核报告一键生成</h3>
+        <p>将审核结论、风险清单、修改建议自动整合为结构化报告，支持 Word/PDF 导出，可直接交付业务部门。</p>
+        <span class="cap-tag">报告自动化 · 多格式</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section class="process-section">
+  <div class="container">
+    <div class="process-header">
+      <div>
+        <div class="sec-eyebrow">工作流程</div>
+        <div class="sec-title" style="color:white">从上传到交付<br>全程自动完成</div>
+        <div class="sec-desc">智能体接管繁琐的重复步骤，法务人员只需在关键节点做决策。</div>
+      </div>
+      <div class="process-steps">
+        <div class="process-step">
+          <div class="step-dot">01</div>
+          <div class="step-body">
+            <h4>上传合同文件</h4>
+            <p>支持 Word、PDF、扫描件（OCR），拖拽上传即可触发</p>
+          </div>
+        </div>
+        <div class="process-step">
+          <div class="step-dot">02</div>
+          <div class="step-body">
+            <h4>结构化解析</h4>
+            <p>自动拆解条款结构，建立语义理解层，识别合同类型</p>
+          </div>
+        </div>
+        <div class="process-step">
+          <div class="step-dot">03</div>
+          <div class="step-body">
+            <h4>多维风险分析</h4>
+            <p>并行运行法律风险、合规检查、标准模板比对三条检测链路</p>
+          </div>
+        </div>
+        <div class="process-step">
+          <div class="step-dot">04</div>
+          <div class="step-body">
+            <h4>生成审核报告</h4>
+            <p>输出风险清单与修改建议，推送至审批人，支持线上批注确认</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<section class="testimonial-section">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:48px">
+      <div class="sec-eyebrow" style="color:rgba(14,165,233,0.8)">客户评价</div>
+      <div class="sec-title" style="color:white;max-width:100%;text-align:center">5000+ 企业的共同选择</div>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">上线后第一个月，合同审核周期从平均5天压缩到了4小时。法务团队终于有时间做战略性工作，而不是淹没在文件堆里。</div>
+        <div class="testi-author">
+          <div class="testi-avatar">李</div>
+          <div>
+            <div class="testi-name">李明 · 法务总监</div>
+            <div class="testi-role">某头部物流集团</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">我们是金融机构，合规要求极高。这套系统的法规库更新非常及时，去年监管新规发布后72小时内就完成了规则更新。</div>
+        <div class="testi-author">
+          <div class="testi-avatar">王</div>
+          <div>
+            <div class="testi-name">王建国 · 合规负责人</div>
+            <div class="testi-role">某城市商业银行</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">对中小律所来说最大的价值是标准化。以前每个律师审合同的标准不一样，现在有了AI兜底，服务质量稳定多了。</div>
+        <div class="testi-author">
+          <div class="testi-avatar">张</div>
+          <div>
+            <div class="testi-name">张晓律师</div>
+            <div class="testi-role">某商事律师事务所</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <div class="sec-eyebrow" style="text-align:center">开始使用</div>
+    <div class="sec-title">您的下一份合同<br>让 AI 先看一遍</div>
+    <div class="sec-desc">30分钟产品演示，了解如何融入您现有的法务工作流。</div>
+    <div class="cta-group">
+      <a class="btn-main" href="#">
+        预约免费演示
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <a class="btn-outline" href="#">下载产品白皮书</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-logo">Contract<em>AI</em></div>
+      <p>© 2026 ContractAI. 保留所有权利 · 隐私政策 · 服务条款</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

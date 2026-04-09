@@ -451,7 +451,51 @@
   .back-btn svg { transition: transform 0.2s; }
   .detail-nav-logo { font-size: 15px; font-weight: 800; color: rgba(11,30,61,0.3); }
 
-  .detail-body { max-width: 920px; margin: 0 auto; padding: 72px 60px 100px; }
+  .detail-body { padding: 0; }
+  .detail-hero {
+    overflow: hidden;
+  }
+  /* max-width 约束层，图片和文字都在这里面 */
+  .detail-hero-inner {
+    position: relative;
+    max-width: 920px; margin: 0 auto;
+    padding: 72px 60px 60px;
+    min-height: 280px;
+    overflow: hidden;
+  }
+  /* 图片：绝对定位在 inner 容器右侧，底层 */
+  .detail-hero-img {
+    position: absolute;
+    right: 40px; top: 50%; transform: translateY(-50%);
+    width: 340px; z-index: 0;
+    pointer-events: none;
+  }
+  .detail-hero-img img {
+    width: 100%; height: auto; display: block;
+    opacity: 0.92;
+  }
+  /* 渐变遮罩：在 inner 容器内从左向右过渡 */
+  .detail-hero-inner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      var(--bg) 42%,
+      rgba(244,246,252,0.7) 62%,
+      transparent 100%
+    );
+    z-index: 1;
+    pointer-events: none;
+  }
+  /* 文字：z-index 2，浮在图片和遮罩上 */
+  .detail-hero-text {
+    position: relative;
+    z-index: 2;
+    max-width: 500px;
+  }
+  /* 内容区 */
+  .detail-content { max-width: 920px; margin: 0 auto; padding: 0 60px 100px; }
   .detail-tag {
     display: inline-flex; align-items: center; gap: 7px;
     font-size: 11px; font-weight: 700; letter-spacing: 1px;
@@ -462,7 +506,7 @@
     font-size: clamp(34px, 5vw, 54px); font-weight: 800;
     letter-spacing: -2px; line-height: 1.1; margin-bottom: 16px;
   }
-  .detail-sub { font-size: 17px; color: var(--dim); line-height: 1.75; max-width: 640px; margin-bottom: 48px; }
+  .detail-sub { font-size: 17px; color: var(--dim); line-height: 1.75; margin-bottom: 0; max-width: 500px; }
   .detail-divider { height: 1px; background: rgba(0,47,167,0.08); margin: 44px 0; }
   .d-section { margin-bottom: 52px; }
   .d-label {
@@ -1119,6 +1163,7 @@ const SCENES = [
     tag: '法务 · 合规',
     color: '#1A56DB', colorDark: '#002FA7',
     bgAlpha: 'rgba(26,86,219,0.08)', orbColor: 'rgba(0,47,167,0.06)',
+    img: 'images/scene-contract.png',
     name: '智能合同\n审核',
     desc: '基于标签知识库、AI大模型与法律法规库，对销售合同、采购合同、合作协议等大文档进行自动化审核，智能识别风险条款与合规问题。',
     values: ['降低法律风险', '缩短审核周期', '标准化审核流程', '多类合同全覆盖'],
@@ -1167,6 +1212,7 @@ const SCENES = [
     tag: '协作 · 效率',
     color: '#0891B2', colorDark: '#0E7490',
     bgAlpha: 'rgba(8,145,178,0.08)', orbColor: 'rgba(8,145,178,0.06)',
+    img: 'images/scene-meeting.png',
     name: '智能会议\n助手',
     desc: '支持发言人声纹识别与拆分，自动生成会议纪要、提炼关键结论、拆解任务清单，并将会议知识沉淀至知识库，大幅降低会议管理成本。',
     values: ['自动生成纪要', '声纹识别分轨', '任务自动拆解', '知识沉淀归档'],
@@ -1210,6 +1256,7 @@ const SCENES = [
     tag: '法律 · 司法',
     color: '#7C3AED', colorDark: '#5B21B6',
     bgAlpha: 'rgba(124,58,237,0.08)', orbColor: 'rgba(124,58,237,0.06)',
+    img: 'images/scene-lawyer.png',
     name: '律师\n小助手',
     desc: '覆盖案情分析、类案识别到文书起草全流程，帮助律师团队快速梳理案件脉络、检索相似判例，并自动生成案件综述报告与法律文书草稿。',
     values: ['案情快速梳理', '类案精准识别', '文书自动起草', '综述报告生成'],
@@ -1255,6 +1302,7 @@ const SCENES = [
     tag: '产业 · 研究',
     color: '#D97706', colorDark: '#B45309',
     bgAlpha: 'rgba(217,119,6,0.08)', orbColor: 'rgba(217,119,6,0.06)',
+    img: 'images/scene-industry.png',
     name: '产业链\n分析助手',
     desc: '基于AI大模型与产业分析框架，多路并发采集政策原文、行业标准、峰会观点、企业动态等多类信息源，整合形成结构化产业链分析报告。',
     values: ['多源并发采集', '自动证据整合', '图谱可视化', '结构化报告输出'],
@@ -1301,6 +1349,7 @@ const SCENES = [
     tag: '招投标',
     color: '#0D9F6A', colorDark: '#065F46',
     bgAlpha: 'rgba(13,159,106,0.08)', orbColor: 'rgba(13,159,106,0.06)',
+    img: 'images/scene-bidding.png',
     name: '招投标\n场景集合',
     desc: '支持招标文件解析与多文件比对：自动识别评分标准、资质要求、技术条款等关键信息，比对投标资料完整度，生成差异性分析报告。',
     values: ['关键信息自动识别', '资料完整度评估', '多文件差异比对', '合规风险预警'],
@@ -1678,61 +1727,72 @@ function nodeIcon(type) {
 function openDetail(idx) {
   const s = SCENES[idx];
   document.getElementById('detailBody').innerHTML = `
-    <div class="detail-tag" style="color:${s.color};background:${s.bgAlpha}">${s.tag}</div>
-    <div class="detail-title" style="background:linear-gradient(135deg,${s.color},${s.colorDark});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
-      ${s.name.replace('\n',' ')}
-    </div>
-    <div class="detail-sub">${s.desc}</div>
-    <div class="d-section">
-      <div class="d-label">核心价值</div>
-      <div class="d-values">
-        ${s.values.map(v=>`<div class="d-value"><div class="d-value-dot" style="background:${s.color}"></div>${v}</div>`).join('')}
-      </div>
-    </div>
-    <div class="detail-divider"></div>
-    <div class="d-section">
-      <div class="d-label">核心功能</div>
-      <div class="d-features">
-        ${s.features.map(f=>`
-          <div class="d-feature">
-            <div class="d-feature-icon" style="background:${s.bgAlpha};color:${s.color}">${f.icon}</div>
-            <h4>${f.title}</h4><p>${f.desc}</p>
-          </div>`).join('')}
-      </div>
-    </div>
-    <div class="detail-divider"></div>
-    <div class="d-section">
-      <div class="d-label">落地流程</div>
-      <div class="d-flow">
-        ${s.steps.map((st,i)=>`
-          <div class="d-step">
-            <div class="d-step-num" style="background:${s.bgAlpha};color:${s.color}">${String(i+1).padStart(2,'0')}</div>
-            <div><h4>${st.title}</h4><p>${st.desc}</p></div>
-          </div>`).join('')}
-      </div>
-    </div>
-    <div class="detail-divider"></div>
-    <div class="dify-section">
-      <div class="dify-label-row">
-        <div class="d-label" style="margin-bottom:0">AI 工作流</div>
-        <div class="dify-badge">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="4" height="4" rx="1" fill="#002FA7" opacity="0.7"/><rect x="7" y="1" width="4" height="4" rx="1" fill="#002FA7" opacity="0.4"/><rect x="1" y="7" width="4" height="4" rx="1" fill="#002FA7" opacity="0.4"/><rect x="7" y="7" width="4" height="4" rx="1" fill="#002FA7" opacity="0.7"/></svg>
-          流程示意
+    <div class="detail-hero">
+      <div class="detail-hero-inner">
+        <div class="detail-hero-img">
+          <img src="${s.img}" alt="${s.name.replace('\n','')}" />
         </div>
-      </div>
-      <div class="dify-canvas">
-        <div class="dify-flow" id="dify-flow-${idx}">
+        <div class="detail-hero-text">
+          <div class="detail-tag" style="color:${s.color};background:${s.bgAlpha}">${s.tag}</div>
+          <div class="detail-title" style="background:linear-gradient(135deg,${s.color},${s.colorDark});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
+            ${s.name.replace('\n',' ')}
+          </div>
+          <div class="detail-sub">${s.desc}</div>
         </div>
       </div>
     </div>
-    <div class="d-cta">
-      <h3>申请「${s.name.replace('\n','')}」方案演示</h3>
-      <p>30 分钟演示，了解该场景在您所在行业的完整落地路径与客户案例</p>
-      <a class="btn-cta" href="#"
-         style="background:linear-gradient(135deg,${s.color},${s.colorDark});box-shadow:0 8px 24px ${s.color}30">
-        预约演示
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </a>
+    <div class="detail-content">
+      <div class="d-section">
+        <div class="d-label">核心价值</div>
+        <div class="d-values">
+          ${s.values.map(v=>`<div class="d-value"><div class="d-value-dot" style="background:${s.color}"></div>${v}</div>`).join('')}
+        </div>
+      </div>
+      <div class="detail-divider"></div>
+      <div class="d-section">
+        <div class="d-label">核心功能</div>
+        <div class="d-features">
+          ${s.features.map(f=>`
+            <div class="d-feature">
+              <div class="d-feature-icon" style="background:${s.bgAlpha};color:${s.color}">${f.icon}</div>
+              <h4>${f.title}</h4><p>${f.desc}</p>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="detail-divider"></div>
+      <div class="d-section">
+        <div class="d-label">落地流程</div>
+        <div class="d-flow">
+          ${s.steps.map((st,i)=>`
+            <div class="d-step">
+              <div class="d-step-num" style="background:${s.bgAlpha};color:${s.color}">${String(i+1).padStart(2,'0')}</div>
+              <div><h4>${st.title}</h4><p>${st.desc}</p></div>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="detail-divider"></div>
+      <div class="dify-section">
+        <div class="dify-label-row">
+          <div class="d-label" style="margin-bottom:0">AI 工作流</div>
+          <div class="dify-badge">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="4" height="4" rx="1" fill="#002FA7" opacity="0.7"/><rect x="7" y="1" width="4" height="4" rx="1" fill="#002FA7" opacity="0.4"/><rect x="1" y="7" width="4" height="4" rx="1" fill="#002FA7" opacity="0.4"/><rect x="7" y="7" width="4" height="4" rx="1" fill="#002FA7" opacity="0.7"/></svg>
+            流程示意
+          </div>
+        </div>
+        <div class="dify-canvas">
+          <div class="dify-flow" id="dify-flow-${idx}">
+          </div>
+        </div>
+      </div>
+      <div class="d-cta">
+        <h3>申请「${s.name.replace('\n','')}」方案演示</h3>
+        <p>30 分钟演示，了解该场景在您所在行业的完整落地路径与客户案例</p>
+        <a class="btn-cta" href="#"
+           style="background:linear-gradient(135deg,${s.color},${s.colorDark});box-shadow:0 8px 24px ${s.color}30">
+          预约演示
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
     </div>`;
   const dp = document.getElementById('detailPage');
   dp.classList.add('visible');
